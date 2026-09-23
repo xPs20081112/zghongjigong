@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>选择题 351-400</title>
+<style>
+:root {
+  --primary: #C3B3FF;
+  --primary-dark: #8B7BD8;
+  --panel-bg: #EDE7FF;
+  --panel-border: #D0C4F0;
+  --card-bg: #FFFFFF;
+  --green: #4CAF50;
+  --green-bg: #C8E6C9;
+  --green-text: #1B5E20;
+  --red: #F44336;
+  --red-bg: #FFCDD2;
+  --red-text: #B71C1C;
+  --text: #2D2A3E;
+  --text-light: #6B6680;
+  --btn-bg: #8B7BD8;
+  --btn-text: #FFFFFF;
+  --btn-disabled-bg: #D8CCFF;
+  --btn-disabled-text: #9B92B8;
+  --page-bg: #C3B3FF;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--page-bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+}
+button, textarea { font: inherit; }
+.quiz-area {
+  flex: 1;
+  padding: 16px;
+  max-width: 920px;
+  margin: 0 auto;
+  min-width: 0;
+}
+.question-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(100, 80, 180, 0.1);
+  scroll-margin-top: 16px;
+  transition: outline 0.2s;
+}
+.question-card.current {
+  outline: 2px solid var(--primary-dark);
+  outline-offset: 2px;
+}
+.question-header {
+  font-size: 13px;
+  color: var(--primary-dark);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.question-stem {
+  font-size: 16px;
+  color: var(--text);
+  margin-bottom: 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.options { display: flex; flex-direction: column; gap: 8px; }
+.options.locked .option { pointer-events: none; }
+.option {
+  padding: 10px 14px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  font-size: 15px;
+  color: var(--text);
+  user-select: none;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.option:hover { background: #F5F1FF; }
+.option.correct {
+  background: var(--green-bg);
+  border-color: var(--green);
+  color: var(--green-text);
+}
+.option.wrong {
+  background: var(--red-bg);
+  border-color: var(--red);
+  color: var(--red-text);
+}
+.info-panel {
+  width: 340px;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  background: var(--panel-bg);
+  border-left: 1px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+.panel-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.number-list-wrap {
+  padding: 12px;
+  border-bottom: 1px solid var(--panel-border);
+  max-height: 40vh;
+  overflow-y: auto;
+}
+.analysis-wrap {
+  padding: 12px;
+  flex: 1;
+  overflow-y: auto;
+  border-bottom: 1px solid var(--panel-border);
+}
+.section-title {
+  font-size: 13px;
+  color: var(--text-light);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.number-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  gap: 6px;
+}
+.num-item {
+  padding: 6px 4px;
+  min-height: 34px;
+  text-align: center;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid var(--panel-border);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.num-item:hover { background: #F5F1FF; }
+.num-item.correct {
+  background: var(--green-bg);
+  border-color: var(--green);
+  color: var(--green-text);
+}
+.num-item.wrong {
+  background: var(--red-bg);
+  border-color: var(--red);
+  color: var(--red-text);
+}
+.num-item.current {
+  outline: 2px solid var(--primary-dark);
+  outline-offset: 1px;
+}
+.analysis {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.analysis:empty::before {
+  content: "点击题号查看解析";
+  color: var(--text-light);
+  font-size: 13px;
+}
+.analysis .my-answer { font-weight: 600; margin-bottom: 6px; }
+.analysis .my-answer.correct { color: var(--green-text); }
+.analysis .my-answer.wrong { color: var(--red-text); }
+.analysis .analysis-line { margin-bottom: 6px; }
+.analysis .meta { color: var(--text-light); font-size: 13px; }
+.nav-buttons {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--panel-border);
+}
+.progress-buttons {
+  display: flex;
+  gap: 6px;
+  padding: 0 12px 12px;
+}
+.btn {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  text-align: center;
+  text-decoration: none;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: filter 0.15s, opacity 0.15s;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn:hover { filter: brightness(1.08); }
+.btn.disabled {
+  background: var(--btn-disabled-bg);
+  color: var(--btn-disabled-text);
+  pointer-events: none;
+  cursor: default;
+}
+.btn.small { padding: 7px 8px; font-size: 12px; }
+.page-title {
+  font-size: 14px;
+  color: var(--primary-dark);
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.panel-bar { display: none; }
+
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(40, 30, 80, 0.5);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal.show { display: flex; }
+.modal-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 30px rgba(60, 45, 120, 0.22);
+}
+.modal-content h3 { margin-bottom: 12px; font-size: 16px; }
+.modal-content textarea {
+  width: 100%;
+  min-height: 220px;
+  padding: 8px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 12px;
+  resize: vertical;
+  margin-bottom: 12px;
+}
+.modal-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+.modal-buttons .btn { min-width: 100px; }
+.modal-note {
+  color: var(--text-light);
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+  body { display: block; padding-bottom: 62px; }
+  .quiz-area { padding: 12px; max-width: none; }
+  .question-card { padding: 14px; }
+  .question-stem { font-size: 15px; }
+  .option { font-size: 14px; padding: 11px 12px; }
+  .info-panel {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: auto;
+    max-height: 78vh;
+    border-left: none;
+    border-top: 1px solid var(--panel-border);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 16px rgba(80, 60, 160, 0.15);
+    z-index: 100;
+  }
+  .info-panel .panel-body { display: none; }
+  .info-panel.expanded .panel-body {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    max-height: calc(78vh - 56px);
+  }
+  .info-panel .panel-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    min-height: 58px;
+  }
+  .info-panel.expanded .panel-bar {
+    border-bottom: 1px solid var(--panel-border);
+    border-radius: 16px 16px 0 0;
+  }
+  .toggle-btn {
+    flex: 0 0 auto;
+    padding: 7px 14px;
+    border-radius: 8px;
+    background: var(--btn-bg);
+    color: #fff;
+    border: none;
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .panel-bar .nav-buttons {
+    flex: 1;
+    padding: 0;
+    border: none;
+  }
+  .panel-body .nav-buttons { display: none; }
+  .number-list-wrap { max-height: none; overflow: visible; }
+  .analysis-wrap { max-height: none; overflow: visible; flex: none; }
+  .progress-buttons { padding-bottom: 14px; flex-wrap: wrap; }
+  .progress-buttons .btn { flex: 1 1 30%; }
+}
+</style>
+</head>
+<body>
+<main class="quiz-area" id="quizArea"></main>
+
+<aside class="info-panel" id="infoPanel">
+  <div class="panel-body">
+    <div class="number-list-wrap">
+      <div class="page-title">选择题 351-400</div>
+      <div class="section-title">题号</div>
+      <div class="number-list" id="numberList"></div>
+    </div>
+    <div class="analysis-wrap">
+      <div class="section-title">解析</div>
+      <div class="analysis" id="analysis"></div>
+    </div>
+    <div class="nav-buttons">
+      <a class="btn" id="prevBtn">上一页</a>
+      <a class="btn" id="nextBtn">下一页</a>
+    </div>
+    <div class="progress-buttons">
+      <button class="btn small" id="exportBtn">导出进度</button>
+      <button class="btn small" id="importBtn">导入进度</button>
+      <button class="btn small" id="clearBtn">清空进度</button>
+    </div>
+  </div>
+  <div class="panel-bar">
+    <button class="toggle-btn" id="toggleBtn">展开</button>
+    <div class="nav-buttons">
+      <a class="btn" id="prevBtnM">上一页</a>
+      <a class="btn" id="nextBtnM">下一页</a>
+    </div>
+  </div>
+</aside>
+
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h3 id="modalTitle">导入进度</h3>
+    <div class="modal-note" id="modalNote"></div>
+    <textarea id="modalTextarea" placeholder="在此粘贴 JSON"></textarea>
+    <div class="modal-buttons">
+      <button class="btn" id="modalConfirm">确定</button>
+      <button class="btn" id="modalDownload" style="display:none">下载 JSON</button>
+      <button class="btn" id="modalClose">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script id="question-data" type="application/json">[{"id":"choice-351","type":"choice","globalNumber":351,"stem":"下面不会危害计算机网络安全的活动是 (　　)","options":{"A":"未经允许进入计算机信息网络或者使用计算机信息网络资源","B":"未经允许对计算机信息网络功能进行删除、修改或者增加","C":"故意制作、传播计算机病毒等破坏性程序","D":"网上在线看电影"},"answer":"D","analysis":"A、B、C 选项均为危害网络安全的行为，网上在线看电影属于正常网络活动","source":"网络安全法规与意识","difficulty":"简单"},{"id":"choice-352","type":"choice","globalNumber":352,"stem":"下面 (　　) 配置是设置 console 口访问密码","options":{"A":"Switch(config)#line vty 0 4  Switch(config-line)#password 123456","B":"Switch(config)#line vty 0 Switch(config-line)#password 123456","C":"Switch(config)#line console 0 Switch(config-line)#password 123456","D":"Switch(config)#line 15      Switch(config-line)#password 123456"},"answer":"C","analysis":"line console 0 用于配置 console 口，A、B 配置的是 vty 线路，D 配置错误","source":"网络设备配置基础","difficulty":"中等"},{"id":"choice-353","type":"choice","globalNumber":353,"stem":"下面各类端口对报文处理正确的是 (　　)","options":{"A":"Access 端口可以接收和发生多个 VLAN 的报文","B":"Trunk 端口可以接收和发生多个 VLAN 的报文","C":"Hybrid 端口只可以接收和发送一个 VLAN 的报文","D":"Trunk 端口可以接收和发送多个不打 VLAN 标签的报文"},"answer":"B","analysis":"Access 端口仅能收发一个 VLAN 报文；Trunk 端口可收发多个 VLAN 报文；Hybrid 端口可灵活配置收发多个 VLAN 报文；Trunk 端口默认只允许 Native VLAN 报文不打标签","source":"VLAN 技术原理与配置","difficulty":"中等"},{"id":"choice-354","type":"choice","globalNumber":354,"stem":"思科交换机配置远程登录用的管理（VLAN 1 接口）IP 地址正确的是 (　　)","options":{"A":"Switch(config)#interface VLAN 1\nSwitch(config-if)#ip address 192.168.1.1 255.255.255.0","B":"Switch(config)#interface VLAN 1\nSwitch(config-if)#ip address 192.168.1.1","C":"Switch(config)#interface 1\nSwitch(config-if)#ip address 192.168.1.1 255.255.255.0","D":"Switch(config)#interface 1\nSwitch(config-if)#ip address 192.168.1.1"},"answer":"A","analysis":"配置 VLAN 1 接口 IP 地址需指定接口及子网掩码，B 未指定子网掩码，C、D 接口配置错误","source":"思科交换机配置","difficulty":"中等"},{"id":"choice-355","type":"choice","globalNumber":355,"stem":"要在思科交换机上显示可用的文件系统，可以使用 (　　) 命令","options":{"A":"Router#show file","B":"Router#show file systems","C":"Router#show systems","D":"Router#show systems file"},"answer":"B","analysis":"show file systems 是显示思科交换机可用文件系统的正确命令，A、C、D 命令错误","source":"思科交换机操作命令","difficulty":"简单"},{"id":"choice-356","type":"choice","globalNumber":356,"stem":"思科路由器上配置远程登录认证方式为本地用户 + 密码验证的命令是 (　　)","options":{"A":"Router(config-line)#login","B":"Router(config-line)#login local","C":"Router(config)#login","D":"Router(config)#login local"},"answer":"B","analysis":"在配置线路模式下，login local 命令用于配置远程登录使用本地用户和密码验证，A、C、D 命令使用位置或错误","source":"思科路由器配置","difficulty":"中等"},{"id":"choice-357","type":"choice","globalNumber":357,"stem":"思科路由器中可以通过 privilege 命令为特权模式配置 (　　) 个层次的命令级别","options":{"A":"8","B":"16","C":"32","D":"64"},"answer":"B","analysis":"思科路由器中 privilege 命令可配置 16 个层次的命令级别","source":"思科路由器高级配置","difficulty":"中等"},{"id":"choice-358","type":"choice","globalNumber":358,"stem":"思科路由器上把设备当前运行的配置文件更改保存到启动配置文件中的命令是 (　　)","options":{"A":"Router#copy running-config startup-config","B":"Router#cp running-config startup-config","C":"Router#write running-config startup-config","D":"Router#save running-config startup-config"},"answer":"A","analysis":"copy running-config startup-config 是思科路由器保存运行配置到启动配置的正确命令，B、C、D 命令错误","source":"思科路由器操作命令","difficulty":"中等"},{"id":"choice-359","type":"choice","globalNumber":359,"stem":"以下不是导致地址解析协议 (ARP) 欺骗的根源是 (　　)","options":{"A":"ARP 协议是一个无状态的协议","B":"为提高效率，ARP 信息在系统中会缓存","C":"ARP 缓存是动态的，可被改写","D":"ARP 协议是用于寻址的一个重要协议"},"answer":"D","analysis":"ARP 协议用于寻址不是导致 ARP 欺骗的根源，A、B、C 选项的无状态、缓存及可改写特性是欺骗根源","source":"ARP 协议原理与安全","difficulty":"中等"},{"id":"choice-360","type":"choice","globalNumber":360,"stem":"操作系统用于管理计算机资源，控制整个系统运行，是计算机软件的基础，操作系统安全是计算、网络及信息系统安全的基础，一般操作系统都提供了相应的安全配置接口，小王新买了一台计算机，开机后首先对带的 Windows 操作系统进行配置，他的主要操作有：（1）关闭不必要的服务和端口；（2）在 “本地安全策略” 中配置账号策略、本地策略、公钥策略和 IP 安全策略：（3）备份敏感文件，禁止建立空连接，下栽最新补丁：（4）关闭审核策略，开启口令策略，开启口令策略，开启账户策略，这些操作中错误的是 (　　)","options":{"A":"操作（1），应该关闭不必要的服务和所有端口","B":"操作（2），在 “本地安全策略” 中不应该配置公钥策略，而应该配置私钥策略","C":"操作（3），备份敏感文件会导致这些文件遭到窃取的几率增加","D":"操作（4），应该开启审核策略"},"answer":"D","analysis":"审核策略可记录系统活动，关闭不利于安全管理，A 关闭所有端口不合理但不是本题错误点；B 公钥策略可配置；C 备份文件是合理安全措施","source":"Windows 操作系统安全配置","difficulty":"中等"},{"id":"choice-361","type":"choice","globalNumber":361,"stem":"应对操作系统安全漏洞的基本方法不包括下面的 (　　)","options":{"A":"对默认安装进行必要的调整","B":"给所有用户设置严格的口令","C":"及时安装最新的安全补丁","D":"更换到另一种操作系统"},"answer":"D","analysis":"更换操作系统不是应对安全漏洞的基本方法，A 选项调整默认安装可减少安全风险，B 选项强口令能增强用户认证安全性，C 选项安装补丁可修复已知漏洞","source":"操作系统安全课程","difficulty":"中等"},{"id":"choice-362","type":"choice","globalNumber":362,"stem":"下面不属于过滤器模式的命令是 (　　)","options":{"A":"ls","B":"cat","C":"grep","D":"tr"},"answer":"B","analysis":"cat 命令主要用于查看文件内容或连接文件，不属于过滤器模式；ls 用于列出目录内容，grep 用于文本搜索过滤，tr 用于字符转换和删除，都有过滤功能","source":"Linux 命令课程","difficulty":"中等"},{"id":"choice-363","type":"choice","globalNumber":363,"stem":"Linux 分区类型默认的是 (　　)","options":{"A":"vfat","B":"ext2","C":"swap","D":"DOS"},"answer":"B","analysis":"Linux 系统默认分区类型是 ext2，vfat 是 Windows 常用的文件系统，swap 是交换分区，DOS 是早期操作系统，不是 Linux 默认分区类型","source":"Linux 系统管理课程","difficulty":"基础"},{"id":"choice-364","type":"choice","globalNumber":364,"stem":"Linux 系统中不能用来显示文件内容的命令有 (　　)","options":{"A":"tac","B":"more","C":"head","D":"type"},"answer":"D","analysis":"type 是 Windows 系统用于显示文件类型或查看命令类型的命令，在 Linux 中不用于显示文件内容；tac 反向显示文件内容，more 分页显示，head 显示文件头部内容","source":"Linux 命令课程","difficulty":"基础"},{"id":"choice-365","type":"choice","globalNumber":365,"stem":"下列各项中不属于 SQL Server 数据库恢复模型的是 (　　)","options":{"A":"FULL","B":"BULK_LOGGED","C":"MOUNT","D":"SIMPLE"},"answer":"C","analysis":"MOUNT 不是 SQL Server 数据库恢复模型，FULL 是完整恢复模型，BULK_LOGGED 是大容量日志恢复模型，SIMPLE 是简单恢复模型","source":"SQL Server 数据库管理课程","difficulty":"中等"},{"id":"choice-366","type":"choice","globalNumber":366,"stem":"某购物网站开发项目经过需求分析进入系统设计阶段，为了保证用户账户的安全，项目开发人员决定用户登录时除了用户名口令认证方式外，还加入基于数字证书的身份认证功能，同时用户口令使用 SMA-1 算法加密后存放在后台数据库中，请问以上安全设计遵循的是哪项安全设计原则 (　　)","options":{"A":"最小特权原则","B":"职责分离原则","C":"纵深防御原则","D":"最少共享机制原则"},"answer":"C","analysis":"通过多种认证方式和口令加密，构建多层安全防护，符合纵深防御原则；最小特权原则强调用户权限最小化，职责分离原则关注功能职责划分，最少共享机制原则注重减少信息共享","source":"网络安全设计课程","difficulty":"中等"},{"id":"choice-367","type":"choice","globalNumber":367,"stem":"(　　) 采用汉明码作盘错校验，采用按位交叉存取，运用于大数据的读写。磁盘驱动器组中的第一个、第二个、第四个…… 第 2n 个磁盘驱动器是专门的校验盘，用于校验和纠错，对大数据量的输入输出有很高的性能","options":{"A":"RAID2","B":"RAID3","C":"RAID4","D":"RAID5"},"answer":"A","analysis":"RAID2 采用汉明码校验和按位交叉存取，适用于大数据读写；RAID3 用奇偶校验码、按字节交叉存取，RAID4 和 RAID5 校验方式与存取方式与 RAID2 不同","source":"存储技术课程","difficulty":"中等"},{"id":"choice-368","type":"choice","globalNumber":368,"stem":"RAID 技术可以提高读写性能，下面选项中无法提高读写性能的是 (　　)","options":{"A":"RAID0","B":"RAID1","C":"RAID3","D":"RAID5"},"answer":"B","analysis":"RAID1 主要用于数据镜像备份，以提高数据安全性，不能显著提高读写性能；RAID0 通过条带化提高读写速度，RAID3 和 RAID5 利用校验和并行存储提升读写性能","source":"存储技术课程","difficulty":"中等"},{"id":"choice-369","type":"choice","globalNumber":369,"stem":"在主机域名中，顶级域名可以代表国家。代表 “中国” 的顶级域名是 (　　)","options":{"A":"CHINA","B":"ZHONGGUO","C":"CN","D":"ZG"},"answer":"C","analysis":"在域名系统中，“CN” 是代表中国的顶级域名，CHINA、ZHONGGUO、ZG 都不是标准的国家顶级域名","source":"域名系统课程","difficulty":"基础"},{"id":"choice-370","type":"choice","globalNumber":370,"stem":"以下关于 DNS 服务器的叙述中，错误的是 (　　)","options":{"A":"用户只能使用本网段内 DNS 服务器进行域名解析","B":"主域名服务器负责维护这个区域的所有域名信息","C":"辅助域名服务器作为主域名服务器的备份服务器提供域名解析服务","D":"转发域名服务器负责非本地域名的查询"},"answer":"A","analysis":"用户并非只能使用本网段内 DNS 服务器，可配置其他可用的 DNS 服务器进行域名解析；B、C、D 选项关于不同类型 DNS 服务器功能的描述正确","source":"DNS 服务器配置课程","difficulty":"中等"},{"id":"choice-371","type":"choice","globalNumber":371,"stem":"新增接入适用于的情况是 (　　)","options":{"A":"网站主办者首次提交网站备案申请或网站主办者以前取得的备案号被注销后，重新提交备案申请","B":"域名在别的接入商备案过，需要变更接入商或域名在别的接入商备案过，需要增加电信接入商","C":"原备案主体在其他接入商备案过，需要新增加备案或主体已备案过，要在此主体下新增网站","D":"在工信部备案通过后需要修改个别备案信息"},"answer":"B","analysis":"A 选项是首次备案情况，C 选项是新增备案情况，D 选项是备案信息变更情况，B 选项符合新增接入定义","source":"网站备案课程","difficulty":"中等"},{"id":"choice-372","type":"choice","globalNumber":372,"stem":"一个备案服务号可以备案 (　　) 个域名","options":{"A":"1 个","B":"2 个","C":"3 个","D":"1 个及 1 个以上"},"answer":"D","analysis":"通常一个备案服务号可备案 1 个及以上域名，具体数量可能因备案规则和接入商规定有所不同","source":"网站备案课程","difficulty":"基础"},{"id":"choice-373","type":"choice","globalNumber":373,"stem":"对于网络安全性的需求，网络操作系统一般采用四级安全保密机制，即注册安全，用户信任者权限，对信任者权限屏蔽与 (　　)","options":{"A":"磁盘镜像","B":"UPS 监控","C":"目录与文件属性","D":"文件备份"},"answer":"C","analysis":"目录与文件属性设置可控制用户对文件和目录的访问权限，是网络操作系统四级安全保密机制之一；磁盘镜像、UPS 监控、文件备份主要用于数据存储和系统运行保障，不属于该安全机制","source":"网络操作系统安全课程","difficulty":"中等"},{"id":"choice-374","type":"choice","globalNumber":374,"stem":"在现行的存储技术中哪两种磁带采用了螺旋扫描读写方式 (　　)","options":{"A":"面向工作组级数据备份的 4mm、面向部门级网络数据网络备份的 8mm 磁带","B":"面向工作组级数据备份的 4mm、面向部门级网络数据网络备份的 6mm 磁带","C":"面向工作组级数据备份的 6mm、面向部门级网络数据网络备份的 8mm 磁带","D":"面向工作组级数据备份的 8mm、面向部门级网络数据网络备份的 8mm 磁带"},"answer":"A","analysis":"在存储技术中，面向工作组级数据备份的 4mm 和面向部门级网络数据备份的 8mm 磁带采用螺旋扫描读写方式，6mm 磁带一般不采用这种方式","source":"存储技术课程","difficulty":"中等"},{"id":"choice-375","type":"choice","globalNumber":375,"stem":"对于 FTP 服务器来说，下列选项中不是 UNIX/Linux 系统中用来进行文件系统备份和恢复的命令是 (　　)","options":{"A":"tar","B":"cpio","C":"umask","D":"backup"},"answer":"C","analysis":"umask 用于设置文件和目录的默认权限掩码，不是文件系统备份和恢复命令；tar 和 cpio 可用于打包和备份文件，backup 是早期 UNIX 系统中的备份命令","source":"UNIX/Linux 系统管理课程","difficulty":"中等"},{"id":"choice-376","type":"choice","globalNumber":376,"stem":"路由器故障诊断可以使用多种工具，下列不属于诊断工具的是 (　　)","options":{"A":"路由器诊断命令","B":"网络管理工具","C":"故障诊断工具","D":"测线仪"},"answer":"D","analysis":"测线仪主要用于检测网线连通性，不是路由器故障诊断工具；路由器诊断命令、网络管理工具、故障诊断工具都可用于诊断路由器故障","source":"路由器故障诊断课程","difficulty":"中等"},{"id":"choice-377","type":"choice","globalNumber":377,"stem":"以下对于协议分析仪的说法不正确的一项是 (　　)","options":{"A":"协议分析仪是对应七层模型中的第七层设计的","B":"协议分析仪所具有的对数据包捕捉和解码能力使得它在解决复杂，罕见的问题时非常有效","C":"协议分析仪是一种复杂的测试工具，它要求操作人员具有较高的技术水平","D":"协议分析仪是一种监视数据通信系统中的数据流，检验数据交换是否正确地按照协议的规定进行的专用测试工具"},"answer":"A","analysis":"协议分析仪可针对网络协议栈各层设计，并非仅对应第七层；B、C、D 选项对协议分析仪功能和特点的描述正确","source":"网络测试技术课程","difficulty":"中等"},{"id":"choice-378","type":"choice","globalNumber":378,"stem":"以下 (　　) 协议不属于网络管理协议","options":{"A":"SNMP","B":"CMIS/CMIP","C":"CMOT","D":"ISDN"},"answer":"D","analysis":"ISDN 是综合业务数字网，是一种通信网络标准，不属于网络管理协议；SNMP 是简单网络管理协议，CMIS/CMIP 是公共管理信息服务 / 公共管理信息协议，CMOT 是基于 TCP/IP 的 CMIS 服务和协议，都用于网络管理","source":"网络管理协议课程","difficulty":"中等"},{"id":"choice-379","type":"choice","globalNumber":379,"stem":"黑客入侵攻击的一般过程的正确顺序是 (　　)：①收集信息；②确定目标；③隐藏痕迹；④实施攻击","options":{"A":"①②③④","B":"②①③④","C":"③④①②","D":"②④③①"},"answer":"B","analysis":"黑客通常先确定目标，再收集目标相关信息，然后实施攻击，最后隐藏痕迹，保证攻击过程的隐蔽性和持续性","source":"网络安全防御课程","difficulty":"中等"},{"id":"choice-380","type":"choice","globalNumber":380,"stem":"网络安全是在网络环境中对信息提供安全保护，下列不属于保护对象的是 (　　)","options":{"A":"信息载体","B":"信息的处理、传输","C":"信息的存储、访问","D":"信息的涵义"},"answer":"D","analysis":"网络安全主要保护信息载体以及信息处理、传输、存储、访问等过程的安全，信息的涵义并非直接保护对象","source":"网络安全基础课程","difficulty":"中等"},{"id":"choice-381","type":"choice","globalNumber":381,"stem":"以下不属于木马入侵的常见方法是 (　　)","options":{"A":"捆绑欺骗","B":"邮件冒名欺骗","C":"危险下载","D":"文件感染"},"answer":"D","analysis":"木马入侵常见方法有捆绑欺骗、邮件冒名欺骗、危险下载等。文件感染是病毒的一种感染方式，并非木马入侵的常见方法","source":"网络安全基础","difficulty":"中等"},{"id":"choice-382","type":"choice","globalNumber":382,"stem":"某软件在设计时，有三种用户访问模式，分别是仅管理员可访问、所有合法用户可访问和允许匿名访问采用这三种访问模式时，攻击面最高的是 (　　)","options":{"A":"仅管理员可访问","B":"所有合法用户可访问","C":"允许匿名","D":"三种方式一样"},"answer":"C","analysis":"允许匿名访问意味着任何用户无需认证即可访问软件，相比仅管理员可访问和所有合法用户可访问模式，其攻击面最大，攻击者更容易尝试入侵","source":"网络安全基础","difficulty":"中等"},{"id":"choice-383","type":"choice","globalNumber":383,"stem":"计算机系统的鉴别不包括 (　　)","options":{"A":"用户标识认证","B":"传输原发点的鉴别","C":"内容鉴别及特征检测","D":"版本鉴别"},"answer":"D","analysis":"计算机系统鉴别主要包括用户标识认证、传输原发点鉴别、内容鉴别及特征检测等。版本鉴别不属于计算机系统鉴别范畴","source":"网络安全基础","difficulty":"中等"},{"id":"choice-384","type":"choice","globalNumber":384,"stem":"以下不属于 DOS 攻击的是 (　　)","options":{"A":"死亡之 PING","B":"SYN Flood 攻击","C":"Land 攻击","D":"勒索病毒攻击"},"answer":"D","analysis":"死亡之 PING、SYN Flood 攻击、Land 攻击都属于拒绝服务（DOS）攻击，通过消耗系统资源使服务瘫痪。勒索病毒攻击主要目的是加密文件勒索赎金，不属于 DOS 攻击","source":"网络安全基础","difficulty":"中等"},{"id":"choice-385","type":"choice","globalNumber":385,"stem":"使网络服务器中充斥着大量要求回复的信息，消耗带宽，导致网络或系统停止正常服务，这属于 (　　) 攻击","options":{"A":"木马","B":"远程调用","C":"拒绝服务","D":"蠕虫"},"answer":"C","analysis":"拒绝服务攻击通过向目标服务器发送大量请求，消耗其资源，使网络或系统无法正常提供服务，符合题干描述","source":"网络安全基础","difficulty":"中等"},{"id":"choice-386","type":"choice","globalNumber":386,"stem":"在 PPDRR 安全模式中，(　　) 是属于安全事件发生后的补救措施","options":{"A":"保护","B":"恢复","C":"响应","D":"检测"},"answer":"B","analysis":"PPDRR 安全模式包括保护、检测、响应、恢复等环节。恢复是在安全事件发生后，对系统进行修复和还原，属于补救措施","source":"网络安全基础","difficulty":"中等"},{"id":"choice-387","type":"choice","globalNumber":387,"stem":"通过 (　　) 建立完善的访问控制策略，及时发现网络遭受攻击情况并加以追踪和防范，避免对网络造成更大损失","options":{"A":"动态站点监控","B":"实施存取控制","C":"安全管理检测","D":"完善服务器系统安全性能"},"answer":"A","analysis":"动态站点监控可以实时监测网站活动，建立访问控制策略并及时发现和处理攻击，减少损失。实施存取控制、安全管理检测、完善服务器系统安全性能虽也重要，但不符合 “及时发现攻击并追踪防范” 这一描述","source":"网络安全基础","difficulty":"中等"},{"id":"choice-388","type":"choice","globalNumber":388,"stem":"针对口令攻击，下面可有效抵御口令攻击的说法错误的是 (　　)","options":{"A":"哈希加密算法要比非对称加密算法更安全","B":"使用 client 端验证码","C":"采用 server 端验证码","D":"使用隐藏 token"},"answer":"B","analysis":"哈希加密算法用于口令加密存储更安全；server 端验证码、隐藏 token 可增强口令安全性。而使用 client 端验证码存在安全风险，易被攻击者获取，不能有效抵御口令攻击","source":"网络安全基础","difficulty":"中等"},{"id":"choice-389","type":"choice","globalNumber":389,"stem":"下列哪个是自动化 SQL 注入工具 (　　)","options":{"A":"nmap","B":"nessus","C":"msf","D":"sqlmap"},"answer":"D","analysis":"nmap 是网络扫描工具；nessus 是漏洞扫描工具；msf 是渗透测试框架；sqlmap 是专门用于自动化 SQL 注入检测和利用的工具","source":"网络安全基础","difficulty":"中等"},{"id":"choice-390","type":"choice","globalNumber":390,"stem":"数据冗余是指 (　　)","options":{"A":"数据和数据之间没有联系","B":"数据有丢失","C":"数据量太大","D":"存在重复的数据"},"answer":"D","analysis":"数据冗余的定义就是存在重复的数据，会浪费存储空间，可能导致数据不一致等问题","source":"数据库基础","difficulty":"简单"},{"id":"choice-391","type":"choice","globalNumber":391,"stem":"Ghost 对系统进行备份时，可以选择分区备份和 (　　)","options":{"A":"整盘备份","B":"增量备份","C":"自定义备份","D":"多区备份"},"answer":"A","analysis":"Ghost 可以对系统进行分区备份和整盘备份，用于系统数据的备份和恢复","source":"系统维护基础","difficulty":"简单"},{"id":"choice-392","type":"choice","globalNumber":392,"stem":"以下哪一个参数表示恢复点目标 (　　)","options":{"A":"RPO","B":"RTO","C":"RYO","D":"RSO"},"answer":"A","analysis":"RPO（Recovery Point Objective）表示恢复点目标，指灾难发生后，系统和数据必须恢复到的时间点要求；RTO（Recovery Time Objective）表示恢复时间目标","source":"数据备份与恢复基础","difficulty":"中等"},{"id":"choice-393","type":"choice","globalNumber":393,"stem":"黑客在 windows 系统中利用命令提示符创建隐藏账号的命令是 (　　)","options":{"A":"net user hack 123456 /add","B":"net user hack$ 123456 /add","C":"net user $hack 123456 /add","D":"net user hack123456 /add"},"answer":"B","analysis":"在 Windows 系统中，在用户名后加 \"\"可创建隐藏账号，netuserhack 123456 /add 是创建隐藏账号的命令","source":"网络安全基础","difficulty":"中等"},{"id":"choice-394","type":"choice","globalNumber":394,"stem":"关于文件型病毒，下面叙述正确的是 (　　)","options":{"A":"感染磁盘的引导记录","B":"寄生在磁盘引导区或主引导区","C":"感染 COM 和 EXE 等可执行文件","D":"Flip 病毒属于文件型病毒"},"answer":"C","analysis":"文件型病毒主要感染 COM 和 EXE 等可执行文件；感染磁盘引导记录、寄生在磁盘引导区或主引导区的是引导型病毒；Flip 病毒是引导型病毒","source":"网络安全基础","difficulty":"中等"},{"id":"choice-395","type":"choice","globalNumber":395,"stem":"保障 UNIX/Linux 系统帐号安全最为关键的措施是 (　　)","options":{"A":"文件 /etc/passwd 和 /etc/group 必须有写保护","B":"删除 /etc/passwd 和 /etc/gmp","C":"设置足够强度的帐号密码","D":"设置足够强度的帐号密码"},"answer":"A","analysis":"/etc/passwd 和 /etc/group 文件存储用户和组的重要信息，对其设置写保护可防止非法修改，保障账号安全。删除相关文件会导致系统异常；设置强密码重要，但不是最关键措施","source":"UNIX/Linux 系统安全","difficulty":"中等"},{"id":"choice-396","type":"choice","globalNumber":396,"stem":"恶意代码通过多种方式传播就形成了 (　　)","options":{"A":"木马","B":"网络蠕虫","C":"移动代码","D":"复合型病毒"},"answer":"D","analysis":"复合型病毒是指恶意代码通过多种方式传播，兼具多种病毒特性，如同时具备文件感染和网络传播能力","source":"网络安全基础","difficulty":"中等"},{"id":"choice-397","type":"choice","globalNumber":397,"stem":"下面不属于恶意代码攻击技术的是 (　　)","options":{"A":"进程注入技术","B":"超级管理技术","C":"端口反向连接技术","D":"自动生产技术"},"answer":"D","analysis":"进程注入技术、端口反向连接技术常用于恶意代码攻击。“超级管理技术” 表述不准确，可能指获取超级用户权限相关技术，也与恶意代码攻击有关。而 “自动生产技术” 不属于恶意代码攻击技术","source":"网络安全基础","difficulty":"中等"},{"id":"choice-398","type":"choice","globalNumber":398,"stem":"下列叙述中正确的是 (　　)","options":{"A":"计算机病毒只感染可执行文件","B":"计算机病毒只感染文本文件","C":"计算机病毒只能通过软件复制的方式进行传播","D":"计算机病毒可以通过读写磁盘或网络等方式进行传播"},"answer":"D","analysis":"计算机病毒可感染多种类型文件，包括可执行文件、文本文件等；传播途径有读写磁盘、网络、移动存储设备等多种方式，并非仅通过软件复制传播","source":"网络安全基础","difficulty":"中等"},{"id":"choice-399","type":"choice","globalNumber":399,"stem":"病毒感染文件时，常常会有一些不同于正常程序的行为，利用病毒的特有行为和特性检测病毒的方法被称为 (　　)","options":{"A":"行为检测法","B":"校验和法","C":"主动防御法","D":"特征行为法"},"answer":"A","analysis":"行为检测法就是利用病毒感染文件时的特有行为和特性来检测病毒；校验和法是通过计算文件校验和判断文件是否被修改；主动防御法是一种综合性的安全防护理念；“特征行为法” 表述不准确","source":"网络安全基础","difficulty":"中等"},{"id":"choice-400","type":"choice","globalNumber":400,"stem":"以下描述的现象中，不属于计算机病毒的是 (　　)","options":{"A":"破坏计算机的程序或数据","B":"windows 的 “控制面板” 窗口中无 “本地连接” 图标","C":"使网络阻塞不可用","D":"使得 CPU 一直处于 100% 使用率"},"answer":"B","analysis":"计算机病毒可能破坏程序或数据、使网络阻塞、导致 CPU 使用率过高。“控制面板” 中无 “本地连接” 图标可能是网络设置问题、驱动问题等，不一定是由计算机病毒引起","source":"网络安全基础","difficulty":"中等"}]</script>
+<script>
+const PAGE_CONFIG = {"pageId": "choice_351-400", "type": "choice", "prevUrl": "choice_301-350.html", "nextUrl": "judgment_1-50.html"};
+const QUESTIONS = JSON.parse(document.getElementById('question-data').textContent);
+
+const STORAGE_KEY = 'quiz_progress_v1';
+const PROGRESS_VERSION = 1;
+const PAGE_LIST = [
+  'choice_1-50.html','choice_51-100.html','choice_101-150.html','choice_151-200.html',
+  'choice_201-250.html','choice_251-300.html','choice_301-350.html','choice_351-400.html',
+  'judgment_1-50.html','judgment_51-100.html'
+];
+
+let state = {
+  version: PROGRESS_VERSION,
+  answers: {},
+  results: {},
+  currentId: null,
+  currentPage: PAGE_CONFIG.pageId
+};
+
+function getAnswer(id) { return state.answers[id] || null; }
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return;
+    state.answers = parsed.answers && typeof parsed.answers === 'object' ? parsed.answers : {};
+    state.results = parsed.results && typeof parsed.results === 'object' ? parsed.results : {};
+    state.currentId = parsed.currentId || null;
+    state.currentPage = parsed.currentPage || PAGE_CONFIG.pageId;
+  } catch (e) {
+    console.warn('loadState failed', e);
+  }
+}
+
+function saveState() {
+  try {
+    state.version = PROGRESS_VERSION;
+    state.currentPage = PAGE_CONFIG.pageId;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.warn('saveState failed', e);
+  }
+}
+
+function isCorrect(id) {
+  const q = QUESTIONS.find(x => x.id === id);
+  if (!q) return null;
+  const a = getAnswer(id);
+  if (a == null) return null;
+  return a === q.answer;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+function renderQuestions() {
+  const area = document.getElementById('quizArea');
+  area.innerHTML = '';
+
+  QUESTIONS.forEach(q => {
+    const card = document.createElement('div');
+    card.className = 'question-card';
+    if (state.currentId === q.id) card.classList.add('current');
+    card.dataset.id = q.id;
+
+    const header = document.createElement('div');
+    header.className = 'question-header';
+    header.textContent = q.type === 'choice'
+      ? `选择题 第${q.globalNumber}题`
+      : `判断题 第${q.globalNumber}题`;
+
+    const stem = document.createElement('div');
+    stem.className = 'question-stem';
+    stem.textContent = q.stem;
+
+    const optionsBox = document.createElement('div');
+    optionsBox.className = 'options';
+
+    const userAnswer = getAnswer(q.id);
+    const answered = userAnswer != null;
+    const isUserCorrect = answered && userAnswer === q.answer;
+    if (answered) optionsBox.classList.add('locked');
+
+    Object.keys(q.options).forEach(key => {
+      const opt = document.createElement('div');
+      opt.className = 'option';
+      opt.dataset.key = key;
+      opt.textContent = q.type === 'choice'
+        ? `${key}. ${q.options[key]}`
+        : q.options[key];
+
+      if (answered) {
+        if (key === q.answer) {
+          opt.classList.add('correct');
+        } else if (!isUserCorrect) {
+          opt.classList.add('wrong');
+        }
+      }
+
+      opt.addEventListener('click', () => selectOption(q.id, key));
+      optionsBox.appendChild(opt);
+    });
+
+    card.appendChild(header);
+    card.appendChild(stem);
+    card.appendChild(optionsBox);
+    area.appendChild(card);
+  });
+}
+
+function selectOption(questionId, key) {
+  if (getAnswer(questionId) != null) return;
+  const q = QUESTIONS.find(x => x.id === questionId);
+  if (!q) return;
+
+  const correct = key === q.answer;
+  state.answers[questionId] = key;
+  state.results[questionId] = {
+    answer: key,
+    isCorrect: correct,
+    analysisVisible: true,
+    locked: true
+  };
+  state.currentId = questionId;
+  saveState();
+
+  const card = document.querySelector(`.question-card[data-id="${CSS.escape(questionId)}"]`);
+  if (card) {
+    card.classList.add('current');
+    const optionsBox = card.querySelector('.options');
+    optionsBox.classList.add('locked');
+    optionsBox.querySelectorAll('.option').forEach(opt => {
+      opt.classList.remove('correct', 'wrong');
+      if (opt.dataset.key === q.answer) {
+        opt.classList.add('correct');
+      } else if (!correct) {
+        opt.classList.add('wrong');
+      }
+    });
+  }
+
+  renderNumberList();
+  showAnalysis(questionId);
+}
+
+function renderNumberList() {
+  const list = document.getElementById('numberList');
+  list.innerHTML = '';
+
+  QUESTIONS.forEach(q => {
+    const item = document.createElement('div');
+    item.className = 'num-item';
+    item.dataset.id = q.id;
+    item.textContent = q.type === 'choice'
+      ? `选${q.globalNumber}`
+      : `判${q.globalNumber}`;
+
+    const correct = isCorrect(q.id);
+    if (correct === true) item.classList.add('correct');
+    else if (correct === false) item.classList.add('wrong');
+
+    if (state.currentId === q.id) item.classList.add('current');
+
+    item.addEventListener('click', () => goToQuestion(q.id));
+    list.appendChild(item);
+  });
+}
+
+function goToQuestion(id) {
+  const card = document.querySelector(`.question-card[data-id="${CSS.escape(id)}"]`);
+  if (!card) return;
+
+  document.querySelectorAll('.question-card.current').forEach(el => el.classList.remove('current'));
+  card.classList.add('current');
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  state.currentId = id;
+  renderNumberList();
+
+  if (getAnswer(id) != null) showAnalysis(id);
+  else clearAnalysis();
+
+  saveState();
+}
+
+function showAnalysis(id) {
+  const q = QUESTIONS.find(x => x.id === id);
+  if (!q) return;
+  const a = getAnswer(id);
+  if (a == null) { clearAnalysis(); return; }
+
+  const correct = a === q.answer;
+  const box = document.getElementById('analysis');
+  box.innerHTML = `
+    <div class="my-answer ${correct ? 'correct' : 'wrong'}">
+      我的答案：${escapeHtml(a)}
+    </div>
+    <div class="analysis-line">解析：${escapeHtml(q.analysis)}</div>
+    <div class="analysis-line meta">来源：${escapeHtml(q.source || '未提供')}</div>
+    <div class="analysis-line meta">难度：${escapeHtml(q.difficulty || '未提供')}</div>
+  `;
+  if (state.results[id]) state.results[id].analysisVisible = true;
+}
+
+function clearAnalysis() {
+  document.getElementById('analysis').innerHTML = '';
+}
+
+function updateNavButton(el, url) {
+  if (!el) return;
+  if (!url) {
+    el.classList.add('disabled');
+    el.removeAttribute('href');
+    el.setAttribute('aria-disabled', 'true');
+  } else {
+    el.classList.remove('disabled');
+    el.setAttribute('href', url);
+    el.removeAttribute('aria-disabled');
+  }
+}
+
+function setupNav() {
+  updateNavButton(document.getElementById('prevBtn'), PAGE_CONFIG.prevUrl);
+  updateNavButton(document.getElementById('nextBtn'), PAGE_CONFIG.nextUrl);
+  updateNavButton(document.getElementById('prevBtnM'), PAGE_CONFIG.prevUrl);
+  updateNavButton(document.getElementById('nextBtnM'), PAGE_CONFIG.nextUrl);
+}
+
+function setupToggle() {
+  const panel = document.getElementById('infoPanel');
+  const btn = document.getElementById('toggleBtn');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    panel.classList.toggle('expanded');
+    btn.textContent = panel.classList.contains('expanded') ? '收起' : '展开';
+  });
+}
+
+function setupScrollSpy() {
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      const cards = document.querySelectorAll('.question-card');
+      let best = null, bestDist = Infinity;
+      cards.forEach(c => {
+        const r = c.getBoundingClientRect();
+        const dist = Math.abs(r.top - 80);
+        if (dist < bestDist) { bestDist = dist; best = c; }
+      });
+      if (best && state.currentId !== best.dataset.id) {
+        state.currentId = best.dataset.id;
+        document.querySelectorAll('.question-card.current').forEach(el => el.classList.remove('current'));
+        best.classList.add('current');
+        renderNumberList();
+        saveState();
+      }
+      ticking = false;
+    });
+  });
+}
+
+function buildProgressForExport() {
+  const copy = {
+    version: PROGRESS_VERSION,
+    exportedAt: new Date().toISOString(),
+    answers: state.answers,
+    results: state.results,
+    currentId: state.currentId,
+    currentPage: state.currentPage || PAGE_CONFIG.pageId
+  };
+  return copy;
+}
+
+function downloadProgress() {
+  const json = JSON.stringify(buildProgressForExport(), null, 2);
+  const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'quiz_progress.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function openProgressModal(mode) {
+  const modal = document.getElementById('modal');
+  const title = document.getElementById('modalTitle');
+  const note = document.getElementById('modalNote');
+  const text = document.getElementById('modalTextarea');
+  const confirmBtn = document.getElementById('modalConfirm');
+  const downloadBtn = document.getElementById('modalDownload');
+  modal.classList.add('show');
+
+  if (mode === 'export') {
+    title.textContent = '导出进度';
+    note.textContent = '下面是完整 JSON，可复制，也可以直接下载 quiz_progress.json。';
+    text.value = JSON.stringify(buildProgressForExport(), null, 2);
+    text.readOnly = true;
+    confirmBtn.textContent = '复制';
+    confirmBtn.dataset.mode = 'export';
+    downloadBtn.style.display = 'inline-flex';
+  } else {
+    title.textContent = '导入进度';
+    note.textContent = '粘贴之前导出的 JSON，点击“导入并恢复”。导入会覆盖当前刷题进度。';
+    text.value = '';
+    text.readOnly = false;
+    confirmBtn.textContent = '导入并恢复';
+    confirmBtn.dataset.mode = 'import';
+    downloadBtn.style.display = 'none';
+  }
+}
+
+function closeProgressModal() {
+  document.getElementById('modal').classList.remove('show');
+}
+
+function restoreImportedState(parsed) {
+  if (!parsed || typeof parsed !== 'object' || !parsed.answers || typeof parsed.answers !== 'object') {
+    throw new Error('JSON 格式不正确');
+  }
+  const importedPage = PAGE_LIST.includes(parsed.currentPage) ? parsed.currentPage : PAGE_CONFIG.pageId;
+
+  state = {
+    version: PROGRESS_VERSION,
+    answers: parsed.answers || {},
+    results: parsed.results && typeof parsed.results === 'object' ? parsed.results : {},
+    currentId: parsed.currentId || null,
+    currentPage: importedPage
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+  if (importedPage !== PAGE_CONFIG.pageId) {
+    location.href = importedPage;
+    return;
+  }
+
+  renderQuestions();
+  renderNumberList();
+  clearAnalysis();
+  if (state.currentId && QUESTIONS.some(q => q.id === state.currentId)) {
+    const card = document.querySelector(`.question-card[data-id="${CSS.escape(state.currentId)}"]`);
+    if (card) card.scrollIntoView({ behavior: 'auto', block: 'start' });
+    if (getAnswer(state.currentId) != null) showAnalysis(state.currentId);
+  }
+  closeProgressModal();
+}
+
+function setupProgressButtons() {
+  const modal = document.getElementById('modal');
+  const text = document.getElementById('modalTextarea');
+  const confirmBtn = document.getElementById('modalConfirm');
+  const closeBtn = document.getElementById('modalClose');
+  const downloadBtn = document.getElementById('modalDownload');
+
+  document.getElementById('exportBtn').addEventListener('click', () => openProgressModal('export'));
+  document.getElementById('importBtn').addEventListener('click', () => openProgressModal('import'));
+
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    if (confirm('确定清空全部刷题进度？此操作不可恢复。')) {
+      localStorage.removeItem(STORAGE_KEY);
+      state = { version: PROGRESS_VERSION, answers: {}, results: {}, currentId: null, currentPage: PAGE_CONFIG.pageId };
+      renderQuestions();
+      renderNumberList();
+      clearAnalysis();
+    }
+  });
+
+  closeBtn.addEventListener('click', closeProgressModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeProgressModal();
+  });
+
+  confirmBtn.addEventListener('click', async () => {
+    const mode = confirmBtn.dataset.mode;
+    if (mode === 'export') {
+      text.select();
+      try {
+        await navigator.clipboard.writeText(text.value);
+      } catch (e) {
+        document.execCommand('copy');
+      }
+      confirmBtn.textContent = '已复制';
+      setTimeout(() => { confirmBtn.textContent = '复制'; }, 1200);
+    } else if (mode === 'import') {
+      try {
+        const parsed = JSON.parse(text.value);
+        if (!confirm('导入将覆盖当前进度，确定继续？')) return;
+        restoreImportedState(parsed);
+      } catch (e) {
+        alert('导入失败：' + e.message);
+      }
+    }
+  });
+
+  downloadBtn.addEventListener('click', downloadProgress);
+}
+
+function init() {
+  loadState();
+  renderQuestions();
+  renderNumberList();
+  setupNav();
+  setupToggle();
+  setupScrollSpy();
+  setupProgressButtons();
+
+  if (state.currentPage !== PAGE_CONFIG.pageId && PAGE_LIST.includes(state.currentPage)) {
+    // A state from another page should not cause a surprise navigation when opened manually;
+    // the index page handles "continue". The imported-state handler redirects immediately.
+    state.currentPage = PAGE_CONFIG.pageId;
+    saveState();
+  }
+
+  if (state.currentId && QUESTIONS.some(q => q.id === state.currentId)) {
+    const card = document.querySelector(`.question-card[data-id="${CSS.escape(state.currentId)}"]`);
+    if (card) card.scrollIntoView({ behavior: 'auto', block: 'start' });
+    if (getAnswer(state.currentId) != null) showAnalysis(state.currentId);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

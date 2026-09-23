@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>选择题 201-250</title>
+<style>
+:root {
+  --primary: #C3B3FF;
+  --primary-dark: #8B7BD8;
+  --panel-bg: #EDE7FF;
+  --panel-border: #D0C4F0;
+  --card-bg: #FFFFFF;
+  --green: #4CAF50;
+  --green-bg: #C8E6C9;
+  --green-text: #1B5E20;
+  --red: #F44336;
+  --red-bg: #FFCDD2;
+  --red-text: #B71C1C;
+  --text: #2D2A3E;
+  --text-light: #6B6680;
+  --btn-bg: #8B7BD8;
+  --btn-text: #FFFFFF;
+  --btn-disabled-bg: #D8CCFF;
+  --btn-disabled-text: #9B92B8;
+  --page-bg: #C3B3FF;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--page-bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+}
+button, textarea { font: inherit; }
+.quiz-area {
+  flex: 1;
+  padding: 16px;
+  max-width: 920px;
+  margin: 0 auto;
+  min-width: 0;
+}
+.question-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(100, 80, 180, 0.1);
+  scroll-margin-top: 16px;
+  transition: outline 0.2s;
+}
+.question-card.current {
+  outline: 2px solid var(--primary-dark);
+  outline-offset: 2px;
+}
+.question-header {
+  font-size: 13px;
+  color: var(--primary-dark);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.question-stem {
+  font-size: 16px;
+  color: var(--text);
+  margin-bottom: 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.options { display: flex; flex-direction: column; gap: 8px; }
+.options.locked .option { pointer-events: none; }
+.option {
+  padding: 10px 14px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  font-size: 15px;
+  color: var(--text);
+  user-select: none;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.option:hover { background: #F5F1FF; }
+.option.correct {
+  background: var(--green-bg);
+  border-color: var(--green);
+  color: var(--green-text);
+}
+.option.wrong {
+  background: var(--red-bg);
+  border-color: var(--red);
+  color: var(--red-text);
+}
+.info-panel {
+  width: 340px;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  background: var(--panel-bg);
+  border-left: 1px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+.panel-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.number-list-wrap {
+  padding: 12px;
+  border-bottom: 1px solid var(--panel-border);
+  max-height: 40vh;
+  overflow-y: auto;
+}
+.analysis-wrap {
+  padding: 12px;
+  flex: 1;
+  overflow-y: auto;
+  border-bottom: 1px solid var(--panel-border);
+}
+.section-title {
+  font-size: 13px;
+  color: var(--text-light);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.number-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  gap: 6px;
+}
+.num-item {
+  padding: 6px 4px;
+  min-height: 34px;
+  text-align: center;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid var(--panel-border);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.num-item:hover { background: #F5F1FF; }
+.num-item.correct {
+  background: var(--green-bg);
+  border-color: var(--green);
+  color: var(--green-text);
+}
+.num-item.wrong {
+  background: var(--red-bg);
+  border-color: var(--red);
+  color: var(--red-text);
+}
+.num-item.current {
+  outline: 2px solid var(--primary-dark);
+  outline-offset: 1px;
+}
+.analysis {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.analysis:empty::before {
+  content: "点击题号查看解析";
+  color: var(--text-light);
+  font-size: 13px;
+}
+.analysis .my-answer { font-weight: 600; margin-bottom: 6px; }
+.analysis .my-answer.correct { color: var(--green-text); }
+.analysis .my-answer.wrong { color: var(--red-text); }
+.analysis .analysis-line { margin-bottom: 6px; }
+.analysis .meta { color: var(--text-light); font-size: 13px; }
+.nav-buttons {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--panel-border);
+}
+.progress-buttons {
+  display: flex;
+  gap: 6px;
+  padding: 0 12px 12px;
+}
+.btn {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  text-align: center;
+  text-decoration: none;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: filter 0.15s, opacity 0.15s;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn:hover { filter: brightness(1.08); }
+.btn.disabled {
+  background: var(--btn-disabled-bg);
+  color: var(--btn-disabled-text);
+  pointer-events: none;
+  cursor: default;
+}
+.btn.small { padding: 7px 8px; font-size: 12px; }
+.page-title {
+  font-size: 14px;
+  color: var(--primary-dark);
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.panel-bar { display: none; }
+
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(40, 30, 80, 0.5);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal.show { display: flex; }
+.modal-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 30px rgba(60, 45, 120, 0.22);
+}
+.modal-content h3 { margin-bottom: 12px; font-size: 16px; }
+.modal-content textarea {
+  width: 100%;
+  min-height: 220px;
+  padding: 8px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 12px;
+  resize: vertical;
+  margin-bottom: 12px;
+}
+.modal-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+.modal-buttons .btn { min-width: 100px; }
+.modal-note {
+  color: var(--text-light);
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+  body { display: block; padding-bottom: 62px; }
+  .quiz-area { padding: 12px; max-width: none; }
+  .question-card { padding: 14px; }
+  .question-stem { font-size: 15px; }
+  .option { font-size: 14px; padding: 11px 12px; }
+  .info-panel {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: auto;
+    max-height: 78vh;
+    border-left: none;
+    border-top: 1px solid var(--panel-border);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 16px rgba(80, 60, 160, 0.15);
+    z-index: 100;
+  }
+  .info-panel .panel-body { display: none; }
+  .info-panel.expanded .panel-body {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    max-height: calc(78vh - 56px);
+  }
+  .info-panel .panel-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    min-height: 58px;
+  }
+  .info-panel.expanded .panel-bar {
+    border-bottom: 1px solid var(--panel-border);
+    border-radius: 16px 16px 0 0;
+  }
+  .toggle-btn {
+    flex: 0 0 auto;
+    padding: 7px 14px;
+    border-radius: 8px;
+    background: var(--btn-bg);
+    color: #fff;
+    border: none;
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .panel-bar .nav-buttons {
+    flex: 1;
+    padding: 0;
+    border: none;
+  }
+  .panel-body .nav-buttons { display: none; }
+  .number-list-wrap { max-height: none; overflow: visible; }
+  .analysis-wrap { max-height: none; overflow: visible; flex: none; }
+  .progress-buttons { padding-bottom: 14px; flex-wrap: wrap; }
+  .progress-buttons .btn { flex: 1 1 30%; }
+}
+</style>
+</head>
+<body>
+<main class="quiz-area" id="quizArea"></main>
+
+<aside class="info-panel" id="infoPanel">
+  <div class="panel-body">
+    <div class="number-list-wrap">
+      <div class="page-title">选择题 201-250</div>
+      <div class="section-title">题号</div>
+      <div class="number-list" id="numberList"></div>
+    </div>
+    <div class="analysis-wrap">
+      <div class="section-title">解析</div>
+      <div class="analysis" id="analysis"></div>
+    </div>
+    <div class="nav-buttons">
+      <a class="btn" id="prevBtn">上一页</a>
+      <a class="btn" id="nextBtn">下一页</a>
+    </div>
+    <div class="progress-buttons">
+      <button class="btn small" id="exportBtn">导出进度</button>
+      <button class="btn small" id="importBtn">导入进度</button>
+      <button class="btn small" id="clearBtn">清空进度</button>
+    </div>
+  </div>
+  <div class="panel-bar">
+    <button class="toggle-btn" id="toggleBtn">展开</button>
+    <div class="nav-buttons">
+      <a class="btn" id="prevBtnM">上一页</a>
+      <a class="btn" id="nextBtnM">下一页</a>
+    </div>
+  </div>
+</aside>
+
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h3 id="modalTitle">导入进度</h3>
+    <div class="modal-note" id="modalNote"></div>
+    <textarea id="modalTextarea" placeholder="在此粘贴 JSON"></textarea>
+    <div class="modal-buttons">
+      <button class="btn" id="modalConfirm">确定</button>
+      <button class="btn" id="modalDownload" style="display:none">下载 JSON</button>
+      <button class="btn" id="modalClose">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script id="question-data" type="application/json">[{"id":"choice-201","type":"choice","globalNumber":201,"stem":"以下关于 NTFS 权限作用原则的描述中，不正确的是 (　　)","options":{"A":"具有累加性","B":"拒绝权限优先于其他权限","C":"文件权限优先于文件夹权限","D":"不需要设置权限"},"answer":"D","analysis":"NTFS 权限具有累加性，拒绝权限优先于其他权限，文件权限优先于文件夹权限，权限设置是保障系统安全的重要手段，所以 “不需要设置权限” 的说法错误。","source":"操作系统安全基础相关课程 ID","difficulty":"易"},{"id":"choice-202","type":"choice","globalNumber":202,"stem":"账号锁定策略中对超过一定次数的错误登录账号进行锁定是为了对抗 (　　) 攻击","options":{"A":"分布式拒绝服务攻击 (DDoS)","B":"病毒传染","C":"口令暴力破解","D":"缓冲区溢出攻击"},"answer":"C","analysis":"口令暴力破解是通过不断尝试密码来获取访问权限，账号锁定策略可以有效阻止这种攻击，而分布式拒绝服务攻击、病毒传染、缓冲区溢出攻击与账号错误登录锁定机制无关。","source":"网络安全策略课程 ID","difficulty":"易"},{"id":"choice-203","type":"choice","globalNumber":203,"stem":"如果现在要 Linux 操作系统中新增一个用户叫 china，则应用的指令命令是 (　　)","options":{"A":"adduser china","B":"useradd china","C":"mkdir china","D":"vi china"},"answer":"B","analysis":"在 Linux 系统中，useradd 命令用于添加用户，adduser 是 Debian 系 Linux 中的等效命令，在一般常见的 Linux 发行版（如 Red Hat、CentOS 等）中使用 useradd，mkdir 用于创建目录，vi 用于编辑文件。","source":"Linux 系统管理课程 ID","difficulty":"易"},{"id":"choice-204","type":"choice","globalNumber":204,"stem":"某文件的组外成员的权限为只读；所有者有全部权限；组内的权限为读与写，则该文件的权限为 (　　)","options":{"A":"467","B":"674","C":"476","D":"764"},"answer":"D","analysis":"在 Linux 文件权限表示中，所有者权限用数字表示为：读（4）、写（2）、执行（1），全部权限为 4 + 2 + 1 = 7；组权限：读（4）、写（2），为 4 + 2 = 6；组外成员权限：只读（4），所以文件权限为 764。","source":"Linux 文件权限管理课程 ID","difficulty":"中"},{"id":"choice-205","type":"choice","globalNumber":205,"stem":"以下哪个命令可以删除一个非空子目录 /tmp (　　)","options":{"A":"del /tmp/*","B":"rm –rf /tmp","C":"rm –Ra /tmp/*","D":"rm –rf /tmp/*"},"answer":"B","analysis":"在 Linux 系统中，rm -rf 命令用于递归强制删除目录及其内容，可删除非空子目录。del 是 Windows 系统下的删除命令，rm -Ra 命令格式错误，rm -rf /tmp/中 “/” 多余。","source":"Linux 文件与目录管理课程 ID","difficulty":"易"},{"id":"choice-206","type":"choice","globalNumber":206,"stem":"一般说来，Red Hat Linux 内核的源程序可以在 (　　) 目录下找到","options":{"A":"/usr/local","B":"/usr/src","C":"/lib","D":"/usr/share"},"answer":"B","analysis":"在 Red Hat Linux 系统中，内核源程序通常存放在 /usr/src 目录下，/usr/local 用于存放本地安装的软件，/lib 是存放系统库文件的目录，/usr/share 存放共享数据。","source":"Linux 系统结构课程 ID","difficulty":"易"},{"id":"choice-207","type":"choice","globalNumber":207,"stem":"为了修改文件 test 的许可模式，使其文件属主具有读、写和运行的权限，组和其他用户可以读和运行，可以采用的方法 (　　)","options":{"A":"chmod 755 test","B":"chmod 700 test","C":"chmod ux+rwx test","D":"chmod g-w test"},"answer":"A","analysis":"chmod 命令用于修改文件权限，755 表示文件属主有读（4）、写（2）、运行（1）权限（4 + 2 + 1 = 7），组和其他用户有读（4）、运行（1）权限（4 + 1 = 5）。chmod 700 表示文件属主有全部权限，组和其他用户无任何权限；chmod ux+rwx test 命令格式错误；chmod g-w 是去除组用户的写权限。","source":"Linux 文件权限设置课程 ID","difficulty":"中"},{"id":"choice-208","type":"choice","globalNumber":208,"stem":"SQL Server 支持两种身份验证模式，即 Windows 身份验证模式和混合模式。SQL Server 的混全模式是指：当网络用户尝试接到 SQL Server 数据库时 (　　)","options":{"A":"Windows 获取用户输入的用户和密码，并提交给 SQL Serve 进行身份验证，并决定用户的数据库访权限","B":"SQL Serve 根据用户输入的用户和密码，并提交给 Windows 进行身份验证，并决定用户的数据库访权限","C":"SQL Serve 根据已在 Windows 网络中登录的用户的网络安全属性，对用户进行身份验证，并决定用户的数据库访权限","D":"登录到本地 Windows 的用户均可无限制访问 SQL Serve 数据库"},"answer":"C","analysis":"在混合模式下，SQL Server 既可以使用 Windows 身份验证（根据已登录 Windows 用户的网络安全属性验证），也可以使用 SQL Server 身份验证（根据用户输入的用户名和密码验证），A、B 描述错误，D 中 “无限制访问” 错误。","source":"SQL Server 数据库安全课程 ID","difficulty":"中"},{"id":"choice-209","type":"choice","globalNumber":209,"stem":"下列叙述不属于完全备份机制特点描述的是 (　　)","options":{"A":"每次备份的数据量较大","B":"每次备份所需的时间也就较大","C":"不能进行得太频繁","D":"需要存储空间小"},"answer":"D","analysis":"完全备份是对整个数据集合进行备份，每次备份的数据量较大，所需时间长，由于数据量大，不能过于频繁进行备份，且需要大量存储空间，“需要存储空间小” 不属于其特点。","source":"数据备份策略课程 ID","difficulty":"易"},{"id":"choice-210","type":"choice","globalNumber":210,"stem":"当选择一个异地备份的站点的时候，最重要的是 (　　)","options":{"A":"和数据中心物理隔离从而不会遭受相同的风险","B":"给同样程度的保护像在数据中心一样","C":"外包到可信任的第三方","D":"准备监视能力"},"answer":"A","analysis":"选择异地备份站点时，确保和数据中心物理隔离，避免遭受相同风险（如自然灾害等）是首要考虑因素，B、C、D 虽然也重要，但不是最重要的。","source":"数据备份与恢复课程 ID","difficulty":"易"},{"id":"choice-211","type":"choice","globalNumber":211,"stem":"差异备份、增量备份、完全备份三种备份策略的恢复速度由慢到快依次为 (　　)","options":{"A":"增量备份、差异备份、完全备份","B":"差异备份、增量备份、完全备份","C":"完全备份、差异备份、增量备份","D":"完全备份、增量备份、差异备份"},"answer":"A","analysis":"增量备份只备份自上次备份（完全备份或增量备份）以来更改的数据，恢复时需要按备份顺序依次还原多个增量备份，恢复速度最慢；差异备份备份自上次完全备份以来更改的数据，恢复时只需还原完全备份和最新的差异备份；完全备份恢复时只需还原一次备份数据，所以恢复速度由慢到快是增量备份、差异备份、完全备份。","source":"数据备份策略课程 ID","difficulty":"中"},{"id":"choice-212","type":"choice","globalNumber":212,"stem":"以下哪类存储系统有自己的文件系统 (　　)","options":{"A":"DAS","B":"NAS","C":"SAN","D":"LAN"},"answer":"B","analysis":"NAS（网络附属存储）是一种专门的文件存储设备，有自己独立的文件系统，可通过网络提供文件共享服务；DAS（直接附加存储）通常依赖主机操作系统管理文件系统；SAN（存储区域网络）主要提供块级存储服务，本身没有独立文件系统；LAN 是局域网，是一种网络类型，不是存储系统。","source":"存储技术基础课程 ID","difficulty":"易"},{"id":"choice-213","type":"choice","globalNumber":213,"stem":"电子公告服务提供者应当记录在电子公告服务系统中发布的信息内容及其发布时间，互联网地址或者域名。记录备份应当保存 (　　) 天","options":{"A":"90","B":"60","C":"30","D":"10"},"answer":"B","analysis":"根据相关规定，电子公告服务提供者记录备份应保存 60 天，这是网络信息管理的要求。","source":"网络信息管理法规课程 ID","difficulty":"易"},{"id":"choice-214","type":"choice","globalNumber":214,"stem":"Backup 命令的功能是用于完成 UNIX/Linux 文件的备份，对于 FTP 服务器来说，下面说法不正确的是 (　　)","options":{"A":"Backup E-C 命令用于进行完整备份","B":"Backup-p 命令用于进行增量备份","C":"Backup-f 命令备份由 file 指定的文件","D":"Backup-d 命令当备份设备为磁带时使用此选项"},"answer":"D","analysis":"在 UNIX/Linux 系统中，Backup 命令并没有 Backup -d 命令用于当备份设备为磁带时的选项，A、B、C 对 Backup 命令功能描述正确。","source":"UNIX/Linux 系统备份课程 ID","difficulty":"中"},{"id":"choice-215","type":"choice","globalNumber":215,"stem":"Oracle 通过修改用户密码策略可提高密码强度，密码策略参数中下列描述错误的是 (　　)","options":{"A":"PASSWORD_MAX 登录超过有效次数锁定时间","B":"FAILED_LOGIN_ATTEMPTS 最大错误登录次数","C":"PASSWORD_GRACE_TIME 密码失效后锁定时间","D":"PASSWORD_LIFE_TIME 口令有效时间"},"answer":"A","analysis":"PASSWORD_MAX 不是登录超过有效次数锁定时间，在 Oracle 密码策略中，FAILED_LOGIN_ATTEMPTS 表示最大错误登录次数，PASSWORD_GRACE_TIME 表示密码失效后锁定时间，PASSWORD_LIFE_TIME 表示口令有效时间。","source":"Oracle 数据库安全课程 ID","difficulty":"中"},{"id":"choice-216","type":"choice","globalNumber":216,"stem":"以下命令 (　　) 主要用于确定网络的连通性，对于确定网络是否正确连接，和网络连接状况的","options":{"A":"ipconfig","B":"ping","C":"netstat","D":"tracert"},"answer":"B","analysis":"ping 命令通过向目标主机发送 ICMP 回声请求数据包，来测试网络的连通性；ipconfig 用于查看本地网络配置信息；netstat 用于查看网络连接、路由表等网络状态信息；tracert 用于跟踪数据包在网络中的路由路径。","source":"网络命令使用课程 ID","difficulty":"易"},{"id":"choice-217","type":"choice","globalNumber":217,"stem":"(　　) 是指为防止系统故障或其他安全事件导致数据丢失，而将数据从应用主机的硬盘或阵列复制、存储到其他存储介质","options":{"A":"数据分类","B":"数据备份","C":"数据加密","D":"网络日志"},"answer":"B","analysis":"数据备份的定义就是为防止数据丢失，将数据从应用主机的存储设备复制到其他存储介质；数据分类是对数据进行分类管理，数据加密是对数据进行加密保护，网络日志是记录网络活动的文件。","source":"数据备份技术课程 ID","difficulty":"易"},{"id":"choice-218","type":"choice","globalNumber":218,"stem":"黑客搭线窃听属于 (　　) 风险","options":{"A":"信息存储安全","B":"信息传输安全","C":"信息访问安全","D":"信息使用安全"},"answer":"B","analysis":"黑客搭线窃听是在数据传输过程中获取信息，属于信息传输安全风险；信息存储安全关注数据存储时的安全性，信息访问安全涉及对数据访问的控制，信息使用安全侧重于数据使用过程中的安全。","source":"网络安全风险分类课程 ID","difficulty":"易"},{"id":"choice-219","type":"choice","globalNumber":219,"stem":"网络后门的功能是 (　　)","options":{"A":"防止管理员密码丢失","B":"保持对目标主机长期控制","C":"为定期维护主机","D":"为了防止主机被非法入侵"},"answer":"B","analysis":"网络后门是黑客为了保持对目标主机长期控制而在目标主机上开设的非法通道，不是防止管理员密码丢失、定期维护主机或防止主机被非法入侵的手段。","source":"网络安全攻击与防范课程 ID","difficulty":"易"},{"id":"choice-220","type":"choice","globalNumber":220,"stem":"当用户通过域名访问某一合法网站时，打开的却是一个不健康的网站，发生该现象的原因可能是 (　　)","options":{"A":"ARP 欺骗","B":"DHCP 欺骗","C":"TCP SYN 攻击","D":"DNS 缓存中毒"},"answer":"D","analysis":"DNS 缓存中毒会导致域名解析错误，使合法域名被解析到错误的 IP 地址，从而用户访问合法域名时打开不健康网站；ARP 欺骗主要影响局域网内的地址解析，DHCP 欺骗干扰动态 IP 地址分配，TCP SYN 攻击是一种拒绝服务攻击方式。","source":"网络安全攻击类型课程 ID","difficulty":"中"},{"id":"choice-221","type":"choice","globalNumber":221,"stem":"新一代病毒木马融合了很多新技术，下来不属于这些新技术的是 (　　)","options":{"A":"进程注入","B":"注册表隐藏","C":"漏洞扫描","D":"破坏性"},"answer":"D","analysis":"进程注入、注册表隐藏、漏洞扫描都属于病毒木马融合的新技术，而破坏性是病毒木马的特性，并非新技术，所以选 D","source":"网络安全基础课程","difficulty":"易"},{"id":"choice-222","type":"choice","globalNumber":222,"stem":"在网络攻击活动中，Tribal Flood Network（TFN）是 (　　) 类的攻击程序","options":{"A":"字典攻击","B":"网络监听","C":"病毒程序","D":"拒绝服务"},"answer":"D","analysis":"Tribal Flood Network（TFN）是典型的拒绝服务攻击程序，通过大量请求使目标服务器资源耗尽，无法正常提供服务，所以选 D","source":"网络安全攻击类型课程","difficulty":"易"},{"id":"choice-223","type":"choice","globalNumber":223,"stem":"(　　) 措施不属于有效对抗拒绝服务攻击的","options":{"A":"带宽限制","B":"增强服务器的性能","C":"提高管理员的能力","D":"只允许必要的通信"},"answer":"C","analysis":"带宽限制可控制流量，增强服务器性能能提升应对能力，只允许必要通信能减少不必要请求，而提高管理员能力对直接对抗拒绝服务攻击作用不大，所以选 C","source":"网络安全防御技术课程","difficulty":"中"},{"id":"choice-224","type":"choice","globalNumber":224,"stem":"(　　) 是用于确定所声明的身份的有效性","options":{"A":"访问控制","B":"身份鉴别","C":"数据保密","D":"防止否认"},"answer":"B","analysis":"身份鉴别是验证声明身份有效性的过程，访问控制是控制对资源的访问，数据保密是保护数据不被泄露，防止否认是防止用户否认操作，所以选 B","source":"信息安全认证课程","difficulty":"易"},{"id":"choice-225","type":"choice","globalNumber":225,"stem":"某商贸公司信息安全管理员考虑到信息系统对业务影响越来越重要，计划编制本单位信息安全应急响应预案，在向主管领导写报告时，他列举了编制信息安全应急响应预案的好处和重要性，在他罗列的四条理由中，其中不适合作为理由的一条是 (　　)","options":{"A":"应急预案是明确关键业务系统信息安全应急响应指挥体系和工作机制的重要方式","B":"应急预案是提高应对网络和信息系统突发事件能力，减少突发事件造成的损失和危害，保障信息系统运行平稳，安全、有序、高效的手段","C":"编制应急预案是国家网络安全对所有单位的强制要求，因此必须建设","D":"应急预案是保障单位业务系统信息安全的重要措施"},"answer":"D","analysis":"A、B、C 选项分别从应急体系、应对能力、国家要求方面说明了编制预案的好处，而 D 选项表述过于笼统，相比之下不适合作为主要理由，所以选 D","source":"信息安全应急管理课程","difficulty":"中"},{"id":"choice-226","type":"choice","globalNumber":226,"stem":"计算机系统中最重要的安全隐患是 (　　)","options":{"A":"配置审查","B":"临时账户管理","C":"数据安全迁移","D":"程序安装"},"answer":"A","analysis":"配置审查如果不严谨，可能导致系统存在安全漏洞，是计算机系统中较为关键的安全隐患。临时账户管理、数据安全迁移、程序安装虽然也可能带来安全问题，但不是最重要的隐患，所以选 A","source":"计算机系统安全课程","difficulty":"中"},{"id":"choice-227","type":"choice","globalNumber":227,"stem":"以下方法中，不适用于检测计算机病毒的是 (　　)","options":{"A":"特征代码法","B":"校验 HASH 值","C":"加密","D":"动态调试"},"answer":"C","analysis":"特征代码法通过比对病毒特征来检测，校验 HASH 值可检查文件完整性判断是否被篡改，动态调试可跟踪程序运行发现异常，而加密是对数据进行保护的手段，不能直接检测病毒，所以选 C","source":"计算机病毒检测技术课程","difficulty":"易"},{"id":"choice-228","type":"choice","globalNumber":228,"stem":"通过采取适度防护，加强 (　　) 落实对安全事件的响应。建立对威胁的防护来保障系统的安全","options":{"A":"信息系统","B":"信息安全保障","C":"检测工作","D":"威胁"},"answer":"C","analysis":"加强检测工作能够及时发现安全事件和威胁，进而落实响应和防护措施保障系统安全。信息系统、信息安全保障是整体范畴，威胁是需要防范的对象，所以选 C","source":"信息安全防护策略课程","difficulty":"易"},{"id":"choice-229","type":"choice","globalNumber":229,"stem":"口令之所以能被攻击，下面说法正确的是 (　　)","options":{"A":"没有进行加密传输","B":"加密算法太简单","C":"口令太简单","D":"口令输入次数没有限制"},"answer":"D","analysis":"口令输入次数没有限制，攻击者就可通过多次尝试进行暴力破解。没有加密传输、加密算法简单、口令简单也可能导致口令被攻击，但相比之下，口令输入次数无限制是更直接的攻击原因，所以选 D","source":"口令安全课程","difficulty":"中"},{"id":"choice-230","type":"choice","globalNumber":230,"stem":"下面最有可能作为万能密码使用的是 (　　)","options":{"A":"用户名输入：admin’ or 1=1#","B":"口令输入：password’ or 1=1#","C":"用户名输入：admin’ or 1=1 limit 1#","D":"口令输入：admin’ or 1=1 limit 1#"},"answer":"C","analysis":"在 SQL 注入中，“admin’ or 1=1 limit 1#” 这种输入方式可能利用数据库漏洞，使查询语句永远为真，从而达到类似万能密码的效果，所以选 C","source":"SQL 注入攻击防范课程","difficulty":"中"},{"id":"choice-231","type":"choice","globalNumber":231,"stem":"在 SQL 注入中，以下注入方式消耗时间最长的是 (　　)","options":{"A":"联合注入","B":"报错注入","C":"时间盲注","D":"宽字节注入"},"answer":"C","analysis":"联合注入、报错注入可直接获取数据，宽字节注入利用编码漏洞注入数据，而时间盲注通过判断数据库响应时间来获取数据，需要多次尝试，消耗时间最长，所以选 C","source":"SQL 注入技术课程","difficulty":"难"},{"id":"choice-232","type":"choice","globalNumber":232,"stem":"口令破解的最好方法是 (　　)","options":{"A":"暴力破解","B":"组合破解","C":"字典攻击","D":"生日攻击"},"answer":"B","analysis":"暴力破解是穷举所有可能，效率低；字典攻击依赖字典库，局限性大；生日攻击主要针对哈希函数。组合破解结合多种方式，综合利用不同破解方法的优势，相比之下是最好的方法，所以选 B","source":"口令破解技术课程","difficulty":"中"},{"id":"choice-233","type":"choice","globalNumber":233,"stem":"常规端口扫描和半开式扫描的区别是 (　　)","options":{"A":"没什么区别","B":"没有完成三次握手，缺少 ACK 过程","C":"半开式采用 UDP 方式扫描","D":"扫描准确性不一样"},"answer":"B","analysis":"常规端口扫描完成三次握手，半开式扫描只完成 SYN 阶段，不完成 ACK 过程，以此来隐藏扫描行为，所以选 B","source":"端口扫描技术课程","difficulty":"易"},{"id":"choice-234","type":"choice","globalNumber":234,"stem":"不经常访问的数据被驻留在较低成本的存储器中，所体现出的分级存储的优点为 (　　)","options":{"A":"减少总体存储成本","B":"性能优化","C":"改善数据可用性","D":"数据迁移对应用透明"},"answer":"A","analysis":"将不常访问数据存于低成本存储器，充分利用存储资源，降低了整体存储成本，所以选 A","source":"存储技术课程","difficulty":"易"},{"id":"choice-235","type":"choice","globalNumber":235,"stem":"分级存储是根据数据的 (　　)、容量、性能等指标，将数据采取不同的存储方式分别存储在不同性能的存储设备上","options":{"A":"重要性","B":"访问频率","C":"保留时间","D":"重要性、访问频率、保留时间"},"answer":"D","analysis":"分级存储综合考虑数据的重要性、访问频率、保留时间以及容量、性能等多方面因素，合理分配存储方式，所以选 D","source":"存储管理课程","difficulty":"中"},{"id":"choice-236","type":"choice","globalNumber":236,"stem":"RAID1 中数据冗余是通过什么技术实现的 (　　)","options":{"A":"OX","B":"海明码校验","C":"P＋Q 双校验","D":"镜像"},"answer":"D","analysis":"RAID1 通过镜像技术，将数据同时存储在两个或多个磁盘上，实现数据冗余，保障数据安全性，所以选 D","source":"RAID 技术课程","difficulty":"易"},{"id":"choice-237","type":"choice","globalNumber":237,"stem":"系统初次备份应该选择 (　　)","options":{"A":"整盘备份","B":"增量备份","C":"自定义备份","D":"文件备份"},"answer":"A","analysis":"系统初次备份选择整盘备份可以完整备份系统所有数据，为后续的恢复提供全面的数据基础。增量备份基于已有备份，自定义备份和文件备份可能不全面，所以选 A","source":"数据备份与恢复课程","difficulty":"易"},{"id":"choice-238","type":"choice","globalNumber":238,"stem":"随机进程名称是恶意代码迷惑管理员和系统安全检查人员的技术手段之一，以下对于随机进程名技术，描述正确的是 (　　)","options":{"A":"随机进程名技术虽然每次进程都是随机的，但是只要找到了进程名称，就找到了恶意代码程序本身","B":"恶意代码生成随机进程名称的目的是使进程名称不固定，因为杀毒软件是按照进程名称进行病毒进程查杀","C":"恶意代码使用随机进程名是通过生成特定格式的进程名称，使进程管理器中看不到恶意代码的进程","D":"随机进程名技术每次启动时随机生成恶意代码进程名称，通过不固定的进程名称使自己不容易被发现真实的恶意代码程序名称"},"answer":"D","analysis":"随机进程名技术通过每次启动时随机生成进程名，避免被轻易识别出恶意代码程序，A 选项找到进程名不一定找到程序本身，B 选项杀毒软件并非单纯按进程名查杀，C 选项进程管理器中还是能看到进程，所以选 D","source":"恶意代码分析课程","difficulty":"中"},{"id":"choice-239","type":"choice","globalNumber":239,"stem":"某个 U 盘已染有病毒，为防止该病毒传染计算机，正确的措施是 (　　)","options":{"A":"删除该 U 盘上的所有程序","B":"给该 U 盘加上写保护","C":"对 U 盘进行格式化","D":"将该 U 盘放一段时间后再使用"},"answer":"C","analysis":"删除所有程序可能无法彻底清除病毒，加写保护不能清除病毒，放一段时间病毒依然存在。格式化可以彻底清除 U 盘中的数据和病毒，所以选 C","source":"计算机病毒防范课程","difficulty":"易"},{"id":"choice-240","type":"choice","globalNumber":240,"stem":"对用户账号和通讯群组名称、昵称、简介、备注、标识，信息发布、转发、评论和通讯群组等服务功能中违法有害信息的防范处置和有关记录保存措施，正确的做法是 (　　)","options":{"A":"通过网络转发给其他人","B":"截图等方式留存相关记录","C":"不理会，不转发","D":"告诉他人一起观看"},"answer":"B","analysis":"A 选项转发有害信息违法，C 选项不理会不利于监管，D 选项一起观看有害信息同样不可取。截图留存记录有助于后续对违法有害信息的调查和处理，所以选 B","source":"网络信息安全法律法规课程","difficulty":"易"},{"id":"choice-241","type":"choice","globalNumber":241,"stem":"() 是约定俗成的大家共同遵循的行为准则。","options":{"A":"社会公德","B":"社会责任","C":"社会文化","D":"社会价值"},"answer":"A","analysis":"社会公德是全体公民在社会交往和公共生活中应该遵循的行为准则，具有约定俗成、共同遵循的特点；社会责任侧重于个体或组织对社会应承担的责任；社会文化是社会的精神财富和物质财富总和；社会价值强调事物对社会的积极意义。所以选 A。","source":"未提供","difficulty":"易"},{"id":"choice-242","type":"choice","globalNumber":242,"stem":"对于学生来说，职业素养培养最大的意义是 ()。","options":{"A":"有利于个人成长","B":"提高就业竞争力","C":"提高学习能力","D":"提高身体素质"},"answer":"B","analysis":"在学生面临就业的情况下，提高就业竞争力对学生未来发展影响最大。虽然职业素养培养有利于个人成长、学习能力提升，但相比之下，就业竞争力与学生职业发展直接相关；职业素养培养与提高身体素质关系不大。所以选 B。","source":"未提供","difficulty":"易"},{"id":"choice-243","type":"choice","globalNumber":243,"stem":"字长是 CPU 的主要技术性能指标之一，它表示的是 ()。","options":{"A":"CPU 能表示的最大的有效数字位数","B":"CPU 能表示的十进制整数的位数","C":"CPU 的计算结果的有效数字长度","D":"CPU 一次能处理二进制数据的位数"},"answer":"D","analysis":"字长指 CPU 一次能处理二进制数据的位数，它决定了计算机的运算精度和处理能力。A、B、C 选项对字长的定义不准确。所以选 D。","source":"未提供","difficulty":"中"},{"id":"choice-244","type":"choice","globalNumber":244,"stem":"下列各项中两个软件均属于系统软件的是 ()。","options":{"A":"WPS 和 UNIX","B":"MIS 和 WPS","C":"MIS 和 UNIX","D":"DOS 和 UNIX"},"answer":"D","analysis":"系统软件是管理和控制计算机硬件与软件资源的软件，DOS、UNIX 是常见的操作系统，属于系统软件；WPS 是办公软件，MIS（管理信息系统）是应用软件。所以选 D。","source":"未提供","difficulty":"中"},{"id":"choice-245","type":"choice","globalNumber":245,"stem":"以下关于关联的叙述正确的是 ()。","options":{"A":"可在两个表的不同数据类型的字段间创建关联","B":"可在两个表的不同数据类型的同名字段间创建关联","C":"可在两个表的相同数据类型的不同名称的字段间创建关联","D":"在创建关联时选择了级联更新相关的字段，则外键表中的字段值变化时，可自动修改主键表中的关联字段"},"answer":"C","analysis":"创建关联时，字段需具有相同数据类型，但字段名可以不同；不同数据类型字段间不能创建关联；级联更新是主键表字段值变化时，外键表关联字段自动更新，而不是外键表字段值变化影响主键表。所以选 C。","source":"未提供","difficulty":"中"},{"id":"choice-246","type":"choice","globalNumber":246,"stem":"TCP/IP 体系结构中，将计算机网络划分为 () 个层次。","options":{"A":"4","B":"5","C":"6","D":"7"},"answer":"A","analysis":"TCP/IP 体系结构将计算机网络划分为网络接口层、网际层、传输层和应用层 4 个层次。所以选 A。","source":"未提供","difficulty":"易"},{"id":"choice-247","type":"choice","globalNumber":247,"stem":"单模光纤的传输方向是 ()。","options":{"A":"散射","B":"衍射","C":"沿光纤直径方向","D":"全反射"},"answer":"C","analysis":"单模光纤只允许一束光沿光纤直径方向传播，散射、衍射不是单模光纤主要传输方式，全反射是光纤传输的原理，但这里强调的是单模光纤传输方向是沿光纤直径方向。所以选 C。","source":"未提供","difficulty":"中"},{"id":"choice-248","type":"choice","globalNumber":248,"stem":"路由器是互连网络的重要设备之一，它工作在 OSI 的 ()。","options":{"A":"数据链路层","B":"网络层","C":"传输层","D":"会话层"},"answer":"B","analysis":"路由器主要功能是根据 IP 地址进行网络层的数据包转发，工作在 OSI 的网络层。数据链路层设备如交换机；传输层主要负责端到端的通信；会话层负责建立、管理和终止会话。所以选 B。","source":"未提供","difficulty":"中"},{"id":"choice-249","type":"choice","globalNumber":249,"stem":"无线网卡使用 () 技术，把数据流编码后放到 RF 信号上。","options":{"A":"加密","B":"解码","C":"调制","D":"解调"},"answer":"C","analysis":"调制是把数字信号转换为模拟信号加载到射频（RF）信号上的过程；加密是对数据进行保密处理；解码是将编码数据还原；解调是把模拟信号转换为数字信号。所以选 C。","source":"未提供","difficulty":"中"},{"id":"choice-250","type":"choice","globalNumber":250,"stem":"《网络安全法》的第一条讲的是 ()。","options":{"A":"法律调整范围","B":"立法目的","C":"国家网络安全战略","D":"国家维护网络安全的主要任务"},"answer":"B","analysis":"《网络安全法》第一条明确阐述了立法目的，即保障网络安全，维护网络空间主权和国家安全、社会公共利益，保护公民、法人和其他组织的合法权益，促进经济社会信息化健康发展。所以选 B。","source":"未提供","difficulty":"易"}]</script>
+<script>
+const PAGE_CONFIG = {"pageId": "choice_201-250", "type": "choice", "prevUrl": "choice_151-200.html", "nextUrl": "choice_251-300.html"};
+const QUESTIONS = JSON.parse(document.getElementById('question-data').textContent);
+
+const STORAGE_KEY = 'quiz_progress_v1';
+const PROGRESS_VERSION = 1;
+const PAGE_LIST = [
+  'choice_1-50.html','choice_51-100.html','choice_101-150.html','choice_151-200.html',
+  'choice_201-250.html','choice_251-300.html','choice_301-350.html','choice_351-400.html',
+  'judgment_1-50.html','judgment_51-100.html'
+];
+
+let state = {
+  version: PROGRESS_VERSION,
+  answers: {},
+  results: {},
+  currentId: null,
+  currentPage: PAGE_CONFIG.pageId
+};
+
+function getAnswer(id) { return state.answers[id] || null; }
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return;
+    state.answers = parsed.answers && typeof parsed.answers === 'object' ? parsed.answers : {};
+    state.results = parsed.results && typeof parsed.results === 'object' ? parsed.results : {};
+    state.currentId = parsed.currentId || null;
+    state.currentPage = parsed.currentPage || PAGE_CONFIG.pageId;
+  } catch (e) {
+    console.warn('loadState failed', e);
+  }
+}
+
+function saveState() {
+  try {
+    state.version = PROGRESS_VERSION;
+    state.currentPage = PAGE_CONFIG.pageId;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.warn('saveState failed', e);
+  }
+}
+
+function isCorrect(id) {
+  const q = QUESTIONS.find(x => x.id === id);
+  if (!q) return null;
+  const a = getAnswer(id);
+  if (a == null) return null;
+  return a === q.answer;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+function renderQuestions() {
+  const area = document.getElementById('quizArea');
+  area.innerHTML = '';
+
+  QUESTIONS.forEach(q => {
+    const card = document.createElement('div');
+    card.className = 'question-card';
+    if (state.currentId === q.id) card.classList.add('current');
+    card.dataset.id = q.id;
+
+    const header = document.createElement('div');
+    header.className = 'question-header';
+    header.textContent = q.type === 'choice'
+      ? `选择题 第${q.globalNumber}题`
+      : `判断题 第${q.globalNumber}题`;
+
+    const stem = document.createElement('div');
+    stem.className = 'question-stem';
+    stem.textContent = q.stem;
+
+    const optionsBox = document.createElement('div');
+    optionsBox.className = 'options';
+
+    const userAnswer = getAnswer(q.id);
+    const answered = userAnswer != null;
+    const isUserCorrect = answered && userAnswer === q.answer;
+    if (answered) optionsBox.classList.add('locked');
+
+    Object.keys(q.options).forEach(key => {
+      const opt = document.createElement('div');
+      opt.className = 'option';
+      opt.dataset.key = key;
+      opt.textContent = q.type === 'choice'
+        ? `${key}. ${q.options[key]}`
+        : q.options[key];
+
+      if (answered) {
+        if (key === q.answer) {
+          opt.classList.add('correct');
+        } else if (!isUserCorrect) {
+          opt.classList.add('wrong');
+        }
+      }
+
+      opt.addEventListener('click', () => selectOption(q.id, key));
+      optionsBox.appendChild(opt);
+    });
+
+    card.appendChild(header);
+    card.appendChild(stem);
+    card.appendChild(optionsBox);
+    area.appendChild(card);
+  });
+}
+
+function selectOption(questionId, key) {
+  if (getAnswer(questionId) != null) return;
+  const q = QUESTIONS.find(x => x.id === questionId);
+  if (!q) return;
+
+  const correct = key === q.answer;
+  state.answers[questionId] = key;
+  state.results[questionId] = {
+    answer: key,
+    isCorrect: correct,
+    analysisVisible: true,
+    locked: true
+  };
+  state.currentId = questionId;
+  saveState();
+
+  const card = document.querySelector(`.question-card[data-id="${CSS.escape(questionId)}"]`);
+  if (card) {
+    card.classList.add('current');
+    const optionsBox = card.querySelector('.options');
+    optionsBox.classList.add('locked');
+    optionsBox.querySelectorAll('.option').forEach(opt => {
+      opt.classList.remove('correct', 'wrong');
+      if (opt.dataset.key === q.answer) {
+        opt.classList.add('correct');
+      } else if (!correct) {
+        opt.classList.add('wrong');
+      }
+    });
+  }
+
+  renderNumberList();
+  showAnalysis(questionId);
+}
+
+function renderNumberList() {
+  const list = document.getElementById('numberList');
+  list.innerHTML = '';
+
+  QUESTIONS.forEach(q => {
+    const item = document.createElement('div');
+    item.className = 'num-item';
+    item.dataset.id = q.id;
+    item.textContent = q.type === 'choice'
+      ? `选${q.globalNumber}`
+      : `判${q.globalNumber}`;
+
+    const correct = isCorrect(q.id);
+    if (correct === true) item.classList.add('correct');
+    else if (correct === false) item.classList.add('wrong');
+
+    if (state.currentId === q.id) item.classList.add('current');
+
+    item.addEventListener('click', () => goToQuestion(q.id));
+    list.appendChild(item);
+  });
+}
+
+function goToQuestion(id) {
+  const card = document.querySelector(`.question-card[data-id="${CSS.escape(id)}"]`);
+  if (!card) return;
+
+  document.querySelectorAll('.question-card.current').forEach(el => el.classList.remove('current'));
+  card.classList.add('current');
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  state.currentId = id;
+  renderNumberList();
+
+  if (getAnswer(id) != null) showAnalysis(id);
+  else clearAnalysis();
+
+  saveState();
+}
+
+function showAnalysis(id) {
+  const q = QUESTIONS.find(x => x.id === id);
+  if (!q) return;
+  const a = getAnswer(id);
+  if (a == null) { clearAnalysis(); return; }
+
+  const correct = a === q.answer;
+  const box = document.getElementById('analysis');
+  box.innerHTML = `
+    <div class="my-answer ${correct ? 'correct' : 'wrong'}">
+      我的答案：${escapeHtml(a)}
+    </div>
+    <div class="analysis-line">解析：${escapeHtml(q.analysis)}</div>
+    <div class="analysis-line meta">来源：${escapeHtml(q.source || '未提供')}</div>
+    <div class="analysis-line meta">难度：${escapeHtml(q.difficulty || '未提供')}</div>
+  `;
+  if (state.results[id]) state.results[id].analysisVisible = true;
+}
+
+function clearAnalysis() {
+  document.getElementById('analysis').innerHTML = '';
+}
+
+function updateNavButton(el, url) {
+  if (!el) return;
+  if (!url) {
+    el.classList.add('disabled');
+    el.removeAttribute('href');
+    el.setAttribute('aria-disabled', 'true');
+  } else {
+    el.classList.remove('disabled');
+    el.setAttribute('href', url);
+    el.removeAttribute('aria-disabled');
+  }
+}
+
+function setupNav() {
+  updateNavButton(document.getElementById('prevBtn'), PAGE_CONFIG.prevUrl);
+  updateNavButton(document.getElementById('nextBtn'), PAGE_CONFIG.nextUrl);
+  updateNavButton(document.getElementById('prevBtnM'), PAGE_CONFIG.prevUrl);
+  updateNavButton(document.getElementById('nextBtnM'), PAGE_CONFIG.nextUrl);
+}
+
+function setupToggle() {
+  const panel = document.getElementById('infoPanel');
+  const btn = document.getElementById('toggleBtn');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    panel.classList.toggle('expanded');
+    btn.textContent = panel.classList.contains('expanded') ? '收起' : '展开';
+  });
+}
+
+function setupScrollSpy() {
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      const cards = document.querySelectorAll('.question-card');
+      let best = null, bestDist = Infinity;
+      cards.forEach(c => {
+        const r = c.getBoundingClientRect();
+        const dist = Math.abs(r.top - 80);
+        if (dist < bestDist) { bestDist = dist; best = c; }
+      });
+      if (best && state.currentId !== best.dataset.id) {
+        state.currentId = best.dataset.id;
+        document.querySelectorAll('.question-card.current').forEach(el => el.classList.remove('current'));
+        best.classList.add('current');
+        renderNumberList();
+        saveState();
+      }
+      ticking = false;
+    });
+  });
+}
+
+function buildProgressForExport() {
+  const copy = {
+    version: PROGRESS_VERSION,
+    exportedAt: new Date().toISOString(),
+    answers: state.answers,
+    results: state.results,
+    currentId: state.currentId,
+    currentPage: state.currentPage || PAGE_CONFIG.pageId
+  };
+  return copy;
+}
+
+function downloadProgress() {
+  const json = JSON.stringify(buildProgressForExport(), null, 2);
+  const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'quiz_progress.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function openProgressModal(mode) {
+  const modal = document.getElementById('modal');
+  const title = document.getElementById('modalTitle');
+  const note = document.getElementById('modalNote');
+  const text = document.getElementById('modalTextarea');
+  const confirmBtn = document.getElementById('modalConfirm');
+  const downloadBtn = document.getElementById('modalDownload');
+  modal.classList.add('show');
+
+  if (mode === 'export') {
+    title.textContent = '导出进度';
+    note.textContent = '下面是完整 JSON，可复制，也可以直接下载 quiz_progress.json。';
+    text.value = JSON.stringify(buildProgressForExport(), null, 2);
+    text.readOnly = true;
+    confirmBtn.textContent = '复制';
+    confirmBtn.dataset.mode = 'export';
+    downloadBtn.style.display = 'inline-flex';
+  } else {
+    title.textContent = '导入进度';
+    note.textContent = '粘贴之前导出的 JSON，点击“导入并恢复”。导入会覆盖当前刷题进度。';
+    text.value = '';
+    text.readOnly = false;
+    confirmBtn.textContent = '导入并恢复';
+    confirmBtn.dataset.mode = 'import';
+    downloadBtn.style.display = 'none';
+  }
+}
+
+function closeProgressModal() {
+  document.getElementById('modal').classList.remove('show');
+}
+
+function restoreImportedState(parsed) {
+  if (!parsed || typeof parsed !== 'object' || !parsed.answers || typeof parsed.answers !== 'object') {
+    throw new Error('JSON 格式不正确');
+  }
+  const importedPage = PAGE_LIST.includes(parsed.currentPage) ? parsed.currentPage : PAGE_CONFIG.pageId;
+
+  state = {
+    version: PROGRESS_VERSION,
+    answers: parsed.answers || {},
+    results: parsed.results && typeof parsed.results === 'object' ? parsed.results : {},
+    currentId: parsed.currentId || null,
+    currentPage: importedPage
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+  if (importedPage !== PAGE_CONFIG.pageId) {
+    location.href = importedPage;
+    return;
+  }
+
+  renderQuestions();
+  renderNumberList();
+  clearAnalysis();
+  if (state.currentId && QUESTIONS.some(q => q.id === state.currentId)) {
+    const card = document.querySelector(`.question-card[data-id="${CSS.escape(state.currentId)}"]`);
+    if (card) card.scrollIntoView({ behavior: 'auto', block: 'start' });
+    if (getAnswer(state.currentId) != null) showAnalysis(state.currentId);
+  }
+  closeProgressModal();
+}
+
+function setupProgressButtons() {
+  const modal = document.getElementById('modal');
+  const text = document.getElementById('modalTextarea');
+  const confirmBtn = document.getElementById('modalConfirm');
+  const closeBtn = document.getElementById('modalClose');
+  const downloadBtn = document.getElementById('modalDownload');
+
+  document.getElementById('exportBtn').addEventListener('click', () => openProgressModal('export'));
+  document.getElementById('importBtn').addEventListener('click', () => openProgressModal('import'));
+
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    if (confirm('确定清空全部刷题进度？此操作不可恢复。')) {
+      localStorage.removeItem(STORAGE_KEY);
+      state = { version: PROGRESS_VERSION, answers: {}, results: {}, currentId: null, currentPage: PAGE_CONFIG.pageId };
+      renderQuestions();
+      renderNumberList();
+      clearAnalysis();
+    }
+  });
+
+  closeBtn.addEventListener('click', closeProgressModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeProgressModal();
+  });
+
+  confirmBtn.addEventListener('click', async () => {
+    const mode = confirmBtn.dataset.mode;
+    if (mode === 'export') {
+      text.select();
+      try {
+        await navigator.clipboard.writeText(text.value);
+      } catch (e) {
+        document.execCommand('copy');
+      }
+      confirmBtn.textContent = '已复制';
+      setTimeout(() => { confirmBtn.textContent = '复制'; }, 1200);
+    } else if (mode === 'import') {
+      try {
+        const parsed = JSON.parse(text.value);
+        if (!confirm('导入将覆盖当前进度，确定继续？')) return;
+        restoreImportedState(parsed);
+      } catch (e) {
+        alert('导入失败：' + e.message);
+      }
+    }
+  });
+
+  downloadBtn.addEventListener('click', downloadProgress);
+}
+
+function init() {
+  loadState();
+  renderQuestions();
+  renderNumberList();
+  setupNav();
+  setupToggle();
+  setupScrollSpy();
+  setupProgressButtons();
+
+  if (state.currentPage !== PAGE_CONFIG.pageId && PAGE_LIST.includes(state.currentPage)) {
+    // A state from another page should not cause a surprise navigation when opened manually;
+    // the index page handles "continue". The imported-state handler redirects immediately.
+    state.currentPage = PAGE_CONFIG.pageId;
+    saveState();
+  }
+
+  if (state.currentId && QUESTIONS.some(q => q.id === state.currentId)) {
+    const card = document.querySelector(`.question-card[data-id="${CSS.escape(state.currentId)}"]`);
+    if (card) card.scrollIntoView({ behavior: 'auto', block: 'start' });
+    if (getAnswer(state.currentId) != null) showAnalysis(state.currentId);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
