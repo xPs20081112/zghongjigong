@@ -383,10 +383,8 @@ body { display: block; }
 <body>
 <div class="index-wrap">
   <section class="hero">
-    <h1>刷题题库</h1>
-    <p>选择题 400 道 · 判断题 100 道 · 手机优先 · 本地保存进度</p>
-    <button class="btn resume-btn" id="resumeBtn">继续上次进度（暂无记录）</button>
-    <div class="stats">共 500 道题，按每页最多 50 题划分，网页无需联网也可直接打开。</div>
+    <h1>网路与信息安全管理员（四级）</h1>
+    <p>2026年</p>
   </section>
 
   <section class="group">
@@ -411,45 +409,6 @@ body { display: block; }
     </div>
   </section>
 </div>
-<script>
-const STORAGE_KEY = 'quiz_progress_v1';
-const PAGE_LIST = [
-  'choice_1-50.html','choice_51-100.html','choice_101-150.html','choice_151-200.html',
-  'choice_201-250.html','choice_251-300.html','choice_301-350.html','choice_351-400.html',
-  'judgment_1-50.html','judgment_51-100.html'
-];
-function resume() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      alert('当前没有可继续的刷题进度。');
-      return;
-    }
-    const state = JSON.parse(raw);
-    const page = PAGE_LIST.includes(state.currentPage) ? state.currentPage : 'choice_1-50.html';
-    location.href = page;
-  } catch (e) {
-    alert('读取进度失败：' + e.message);
-  }
-}
-function refreshResumeButton() {
-  const btn = document.getElementById('resumeBtn');
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const state = raw ? JSON.parse(raw) : null;
-    const has = state && state.currentPage && PAGE_LIST.includes(state.currentPage);
-    btn.disabled = !has;
-    btn.classList.toggle('disabled', !has);
-    btn.textContent = has ? '继续上次进度' : '继续上次进度（暂无记录）';
-  } catch (e) {
-    btn.disabled = true;
-    btn.classList.add('disabled');
-  }
-}
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('resumeBtn').addEventListener('click', resume);
-  refreshResumeButton();
-});
-</script>
+
 </body>
 </html>
